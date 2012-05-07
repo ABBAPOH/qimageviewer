@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
-    <height>240</height>
+    <width>691</width>
+    <height>412</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>320</width>
+     <width>691</width>
      <height>22</height>
     </rect>
    </property>
@@ -42,6 +42,9 @@
    <addaction name="actionZoomOut"/>
    <addaction name="actionNormalSize"/>
    <addaction name="actionBestFit"/>
+   <addaction name="separator"/>
+   <addaction name="actionRotateLeft"/>
+   <addaction name="actionRotateRight"/>
   </widget>
   <action name="actionZoomIn">
    <property name="text">
@@ -71,6 +74,21 @@
   <action name="actionNormalSize">
    <property name="text">
     <string>Normal Size</string>
+   </property>
+  </action>
+  <action name="actionFlipHorizontally">
+   <property name="text">
+    <string>Flip horizontally</string>
+   </property>
+  </action>
+  <action name="actionRotateLeft">
+   <property name="text">
+    <string>Rotate left</string>
+   </property>
+  </action>
+  <action name="actionRotateRight">
+   <property name="text">
+    <string>Rotate right</string>
    </property>
   </action>
  </widget>

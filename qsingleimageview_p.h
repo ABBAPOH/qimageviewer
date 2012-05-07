@@ -19,6 +19,20 @@ private:
     QSingleImageViewPrivate *d;
 };
 
+class RotateAnimation : public QVariantAnimation
+{
+    Q_OBJECT
+
+public:
+    explicit RotateAnimation(QSingleImageViewPrivate *dd, QObject *parent = 0);
+
+protected:
+    void updateCurrentValue(const QVariant &value);
+
+private:
+    QSingleImageViewPrivate *d;
+};
+
 class QSingleImageViewPrivate
 {
     Q_DECLARE_PUBLIC(QSingleImageView)
@@ -28,11 +42,19 @@ public:
         zoomFactor(1.0),
         visualZoomFactor(1.0),
         zoomAnimation(this),
+        rotateAnimation(this),
+        rotationAngle(0),
         q_ptr(qq)
     {}
 
+    void setImage(const QImage &image);
+
     void setZoomFactor(qreal factor);
     void setVisualZoomFactor(qreal factor);
+
+    void rotate(bool left);
+    void setRotationAngle(qreal angle);
+
     void updateScrollBars();
 
 public:
@@ -43,6 +65,9 @@ public:
     qreal zoomFactor;
     qreal visualZoomFactor;
     ZoomAnimation zoomAnimation;
+    RotateAnimation rotateAnimation;
+
+    qreal rotationAngle;
 
     QPoint prevPos;
 

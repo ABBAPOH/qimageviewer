@@ -20,6 +20,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
+
+    connect(ui->actionRotateLeft, SIGNAL(triggered()), m_view, SLOT(rotateLeft()));
+    connect(ui->actionRotateRight, SIGNAL(triggered()), m_view, SLOT(rotateRight()));
+
+    connect(ui->actionFlipHorizontally, SIGNAL(triggered()), m_view, SLOT(flipHorizontally()));
+
     resize(640, 480);
 }
 

@@ -20,6 +20,17 @@ void ZoomAnimation::updateCurrentValue(const QVariant &value)
     d->setVisualZoomFactor(value.toReal());
 }
 
+RotateAnimation::RotateAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
+    QVariantAnimation(parent),
+    d(dd)
+{
+}
+
+void RotateAnimation::updateCurrentValue(const QVariant &value)
+{
+    d->setRotationAngle(value.toReal());
+}
+
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
 {
     if (zoomFactor == factor)
@@ -41,7 +52,12 @@ void QSingleImageViewPrivate::setZoomFactor(qreal factor)
     zoomAnimation.start();
 }
 
-#include <QTime>
+void QSingleImageViewPrivate::setImage(const QImage &image)
+{
+    this->image = image;
+    pixmap = QPixmap::fromImage(image);
+}
+
 void QSingleImageViewPrivate::setVisualZoomFactor(qreal factor)
 {
     visualZoomFactor = factor;
@@ -73,6 +89,33 @@ void QSingleImageViewPrivate::updateScrollBars()
     q->verticalScrollBar()->setRange(0, vmax > 0 ? vmax : 0);
     q->verticalScrollBar()->setValue(rv * q->verticalScrollBar()->maximum() + 0.5);
 
+    q->viewport()->update();
+}
+
+void QSingleImageViewPrivate::rotate(bool left)
+{
+    Q_Q(QSingleImageView);
+
+    QTransform matrix;
+    matrix.rotate(left ? -90 : 90, Qt::ZAxis);
+    setImage(image.transformed(matrix, Qt::SmoothTransformation));
+    q->viewport()->update();
+
+    if (rotateAnimation.state() == QVariantAnimation::Running)
+        rotateAnimation.stop();
+
+    rotateAnimation.setStartValue(left ? 90 : -90);
+    rotateAnimation.setEndValue(0);
+    rotateAnimation.setEasingCurve(QEasingCurve::Linear);
+    rotateAnimation.setDuration(75);
+    rotateAnimation.start();
+}
+
+void QSingleImageViewPrivate::setRotationAngle(qreal angle)
+{
+    rotationAngle = angle;
+
+    Q_Q(QSingleImageView);
     q->viewport()->update();
 }
 
@@ -110,6 +153,7 @@ void QSingleImageView::setImage(const QImage &image)
     d->pixmap = QPixmap::fromImage(d->image);
 
     bestFit();
+    viewport()->update();
 }
 
 void QSingleImageView::zoomIn()
@@ -157,6 +201,30 @@ void QSingleImageView::normalSize()
     Q_D(QSingleImageView);
 
     d->setZoomFactor(1.0);
+}
+
+void QSingleImageView::rotateLeft()
+{
+    Q_D(QSingleImageView);
+
+    d->rotate(true);
+}
+
+void QSingleImageView::rotateRight()
+{
+    Q_D(QSingleImageView);
+
+    d->rotate(false);
+}
+
+void QSingleImageView::flipHorizontally()
+{
+    Q_D(QSingleImageView);
+
+    QTransform matrix;
+    matrix.rotate(180, Qt::YAxis);
+    d->setImage(d->image.transformed(matrix, Qt::SmoothTransformation));
+    viewport()->update();
 }
 
 void QSingleImageView::mousePressEvent(QMouseEvent *e)
@@ -233,6 +301,10 @@ void QSingleImageView::paintEvent(QPaintEvent *)
         vvalue = -(viewport()->height() - factor*d->pixmap.height())/2;
 
     QRect backgroundRect(QPoint(-hvalue, -vvalue), d->pixmap.size()*factor);
+
+    p.translate(backgroundRect.center());
+    p.rotate(d->rotationAngle);
+    p.translate(-backgroundRect.center());
 
     p.save();
     p.setClipRect(backgroundRect);

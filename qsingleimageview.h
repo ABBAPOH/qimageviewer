@@ -24,6 +24,11 @@ public slots:
     void bestFit();
     void normalSize();
 
+    void rotateLeft();
+    void rotateRight();
+
+    void flipHorizontally();
+
 protected:
     void mousePressEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
