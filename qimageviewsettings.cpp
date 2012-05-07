@@ -11,7 +11,7 @@ QImageViewSettings::QImageViewSettings() :
     Q_D(QImageViewSettings);
 
     d->imageBackgroundType = None;
-//    d->imageBackgroundType = Chess;
+    d->imageBackgroundType = Chess;
 //    d->imageBackgroundType = SolidColor;
     d->imageBackgroundColor = qApp->palette().color(QPalette::Base);
     d->backgroundColor = qApp->palette().color(QPalette::Window).darker(150);

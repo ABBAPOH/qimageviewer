@@ -9,19 +9,45 @@
 
 #include "qimageviewsettings.h"
 
+ZoomAnimation::ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
+    QVariantAnimation(parent),
+    d(dd)
+{
+}
+
+void ZoomAnimation::updateCurrentValue(const QVariant &value)
+{
+    d->setVisualZoomFactor(value.toReal());
+}
+
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
 {
     if (zoomFactor == factor)
         return;
 
-    qDebug() << "setZoomFactor" << factor;
     if (factor < 0.01)
         factor = 0.01;
 
     zoomFactor = factor;
+//    visualZoomFactor = factor;
 
-    pixmap = originalPixmap.scaled(originalPixmap.size()*zoomFactor);
+    if (zoomAnimation.state() == QVariantAnimation::Running)
+        zoomAnimation.stop();
 
+    zoomAnimation.setStartValue(visualZoomFactor);
+    zoomAnimation.setEndValue(zoomFactor);
+    zoomAnimation.setDuration(75);
+    zoomAnimation.setEasingCurve(QEasingCurve::Linear);
+    zoomAnimation.start();
+}
+
+#include <QTime>
+void QSingleImageViewPrivate::setVisualZoomFactor(qreal factor)
+{
+    visualZoomFactor = factor;
+
+    Q_Q(QSingleImageView);
+    q->viewport()->update();
     updateScrollBars();
 }
 
@@ -29,7 +55,7 @@ void QSingleImageViewPrivate::updateScrollBars()
 {
     Q_Q(QSingleImageView);
 
-    QSize size = pixmap.size();
+    QSize size = pixmap.size() * visualZoomFactor;
     int hmax = size.width() - q->viewport()->width();
     int vmax = size.height() - q->viewport()->height();
 
@@ -42,10 +68,11 @@ void QSingleImageViewPrivate::updateScrollBars()
                 1.0*q->verticalScrollBar()->value() / q->verticalScrollBar()->maximum();
 
     q->horizontalScrollBar()->setRange(0, hmax > 0 ? hmax : 0);
-    q->horizontalScrollBar()->setValue(rh * q->horizontalScrollBar()->maximum());
+    q->horizontalScrollBar()->setValue(rh * q->horizontalScrollBar()->maximum() + 0.5);
 
     q->verticalScrollBar()->setRange(0, vmax > 0 ? vmax : 0);
-    q->verticalScrollBar()->setValue(rv * q->verticalScrollBar()->maximum());
+    q->verticalScrollBar()->setValue(rv * q->verticalScrollBar()->maximum() + 0.5);
+
     q->viewport()->update();
 }
 
@@ -80,10 +107,8 @@ void QSingleImageView::setImage(const QImage &image)
     Q_D(QSingleImageView);
 
     d->image = image;
-    d->pixmap = QPixmap::fromImage(image);
-    d->originalPixmap = d->pixmap;
+    d->pixmap = QPixmap::fromImage(d->image);
 
-    d->updateScrollBars();
     bestFit();
 }
 
@@ -106,7 +131,9 @@ void QSingleImageView::bestFit()
     Q_D(QSingleImageView);
 
     QSize imageSize = d->image.size();
-    QSize size = viewport()->size();
+    QSize size = this->size();
+    size.rwidth() -= verticalScrollBar()->isVisible() ? verticalScrollBar()->width() : 0;
+    size.rheight() -= verticalScrollBar()->isVisible() ? horizontalScrollBar()->height() : 0;
 
     int w = imageSize.width(), mw = size.width();
     int h = imageSize.height(), mh = size.height();
@@ -187,31 +214,40 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     QImageViewSettings *settings = QImageViewSettings::globalSettings();
 
     QImageViewSettings::ImageBackgroundType type = settings->imageBackgroundType();
-    QColor imageBackground = settings->imageBackgroundColor();
-    QColor background = settings->backgroundColor();
+    QColor imageBackgroundColor = settings->imageBackgroundColor();
+    QColor backgroundColor = settings->backgroundColor();
 
     QPainter p(viewport());
 
-    p.fillRect(viewport()->rect(), background);
+    p.fillRect(viewport()->rect(), backgroundColor);
+
+    qreal factor = d->visualZoomFactor;
 
     int hvalue = horizontalScrollBar()->value();
     int vvalue = verticalScrollBar()->value();
 
     if (horizontalScrollBar()->maximum() == 0)
-        hvalue = -(viewport()->width() - d->pixmap.width())/2;
+        hvalue = -(viewport()->width() - factor*d->pixmap.width())/2;
 
     if (verticalScrollBar()->maximum() == 0)
-        vvalue = -(viewport()->height() - d->pixmap.height())/2;
+        vvalue = -(viewport()->height() - factor*d->pixmap.height())/2;
 
-    QRect r(QPoint(-hvalue, -vvalue), d->pixmap.size());
+    QRect backgroundRect(QPoint(-hvalue, -vvalue), d->pixmap.size()*factor);
 
+    p.save();
+    p.setClipRect(backgroundRect);
     switch (type) {
     case QImageViewSettings::None : break;
-    case QImageViewSettings::Chess : p.drawTiledPixmap(r, ::chessBoardBackground()); break;
-    case QImageViewSettings::SolidColor : p.fillRect(r, imageBackground); break;
+    case QImageViewSettings::Chess : p.drawTiledPixmap(viewport()->rect(), ::chessBoardBackground()); break;
+    case QImageViewSettings::SolidColor : p.fillRect(viewport()->rect(), imageBackgroundColor); break;
     }
+    p.restore();
 
-    p.drawPixmap(r, d->pixmap);
+    p.translate(-hvalue, -vvalue);
+    p.scale(factor, factor);
+
+    QRect pixmapRect(QPoint(0,0), d->pixmap.size());
+    p.drawPixmap(pixmapRect, d->pixmap);
 }
 
 bool QSingleImageView::viewportEvent(QEvent *e)
@@ -220,10 +256,7 @@ bool QSingleImageView::viewportEvent(QEvent *e)
     case QEvent::Resize : {
         Q_D(QSingleImageView);
 
-        QSize size = d->pixmap.size();
-        verticalScrollBar()->setRange(0, size.height() - viewport()->height());
-        horizontalScrollBar()->setRange(0, size.width() - viewport()->width());
-        viewport()->update();
+        d->updateScrollBars();
     }
     default:
         break;
@@ -231,3 +264,5 @@ bool QSingleImageView::viewportEvent(QEvent *e)
 
     return QAbstractScrollArea::viewportEvent(e);
 }
+
+#include "moc_qsingleimageview.cpp"
