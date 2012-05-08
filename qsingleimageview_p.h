@@ -49,12 +49,18 @@ public:
     void rotate(bool left);
     void setRotationAngle(qreal angle);
 
+    void setHFlipAngle(qreal angle);
+    void setVFlipAngle(qreal angle);
+
     void updateScrollBars();
 
     void animationFinished();
     void stopAnimations();
 
     void syncPixmap();
+    void updateViewport();
+
+    bool hasRunningAnimations();
 
 public:
     QImage image;
@@ -67,6 +73,12 @@ public:
 
     qreal rotationAngle;
     QImageViewerRealAnimation rotateAnimation;
+
+    qreal hFlipAngle;
+    QImageViewerRealAnimation hFlipAnimation;
+
+    qreal vFlipAngle;
+    QImageViewerRealAnimation vFlipAnimation;
 
     QPoint prevPos;
 

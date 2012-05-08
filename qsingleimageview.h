@@ -28,6 +28,7 @@ public slots:
     void rotateRight();
 
     void flipHorizontally();
+    void flipVertically();
 
 protected:
     void mousePressEvent(QMouseEvent *);

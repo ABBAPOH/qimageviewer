@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>691</width>
-    <height>412</height>
+    <width>770</width>
+    <height>517</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>691</width>
+     <width>770</width>
      <height>22</height>
     </rect>
    </property>
@@ -45,6 +45,9 @@
    <addaction name="separator"/>
    <addaction name="actionRotateLeft"/>
    <addaction name="actionRotateRight"/>
+   <addaction name="separator"/>
+   <addaction name="actionFlipHorizontally"/>
+   <addaction name="actionFlipVertically"/>
   </widget>
   <action name="actionZoomIn">
    <property name="text">
@@ -110,6 +113,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionFlipVertically">
+   <property name="text">
+    <string>Flip vertically</string>
    </property>
   </action>
  </widget>

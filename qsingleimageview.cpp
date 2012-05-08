@@ -39,6 +39,10 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     zoomAnimation(this),
     rotationAngle(0),
     rotateAnimation(&QSingleImageViewPrivate::setRotationAngle, this),
+    hFlipAngle(0),
+    hFlipAnimation(&QSingleImageViewPrivate::setHFlipAngle, this),
+    vFlipAngle(0),
+    vFlipAnimation(&QSingleImageViewPrivate::setVFlipAngle, this),
     q_ptr(qq)
 {
 }
@@ -103,12 +107,15 @@ void QSingleImageViewPrivate::updateScrollBars()
 
 void QSingleImageViewPrivate::animationFinished()
 {
-    syncPixmap();
+    if (!hasRunningAnimations())
+        syncPixmap();
 }
 
 void QSingleImageViewPrivate::stopAnimations()
 {
     rotateAnimation.stop();
+    vFlipAnimation.stop();
+    hFlipAnimation.stop();
 }
 
 void QSingleImageViewPrivate::syncPixmap()
@@ -118,10 +125,37 @@ void QSingleImageViewPrivate::syncPixmap()
     rotateAnimation.setStartValue(0);
     rotateAnimation.setEndValue(0);
 
+    hFlipAngle = 0.0;
+    hFlipAnimation.setStartValue(0);
+    hFlipAnimation.setEndValue(0);
+
+    vFlipAngle = 0.0;
+    vFlipAnimation.setStartValue(0);
+    vFlipAnimation.setEndValue(0);
+
     pixmap = QPixmap::fromImage(image);
 
+    updateViewport();
+}
+
+void QSingleImageViewPrivate::updateViewport()
+{
     Q_Q(QSingleImageView);
     q->viewport()->update();
+}
+
+bool QSingleImageViewPrivate::hasRunningAnimations()
+{
+    if (rotateAnimation.state() == QVariantAnimation::Running)
+        return true;
+
+    if (hFlipAnimation.state() == QVariantAnimation::Running)
+        return true;
+
+    if (vFlipAnimation.state() == QVariantAnimation::Running)
+        return true;
+
+    return false;
 }
 
 void QSingleImageViewPrivate::rotate(bool left)
@@ -139,7 +173,7 @@ void QSingleImageViewPrivate::rotate(bool left)
     rotateAnimation.setStartValue(rotationAngle);
     rotateAnimation.setEndValue(rotateAnimation.endValue().toReal() + (left ? - 90 : 90));
     rotateAnimation.setEasingCurve(QEasingCurve::Linear);
-    rotateAnimation.setDuration(75);
+    rotateAnimation.setDuration(200);
     rotateAnimation.start();
 }
 
@@ -147,8 +181,21 @@ void QSingleImageViewPrivate::setRotationAngle(qreal angle)
 {
     rotationAngle = angle;
 
-    Q_Q(QSingleImageView);
-    q->viewport()->update();
+    updateViewport();
+}
+
+void QSingleImageViewPrivate::setHFlipAngle(qreal angle)
+{
+    hFlipAngle = angle;
+
+    updateViewport();
+}
+
+void QSingleImageViewPrivate::setVFlipAngle(qreal angle)
+{
+    vFlipAngle = angle;
+
+    updateViewport();
 }
 
 QSingleImageView::QSingleImageView(QWidget *parent) :
@@ -166,6 +213,8 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     viewport()->setCursor(Qt::OpenHandCursor);
 
     connect(&d->rotateAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
+    connect(&d->hFlipAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
+    connect(&d->vFlipAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
 }
 
 QSingleImageView::~QSingleImageView()
@@ -271,9 +320,37 @@ void QSingleImageView::flipHorizontally()
     Q_D(QSingleImageView);
 
     QTransform matrix;
+    matrix.rotate(180, Qt::XAxis);
+    d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
+//    d->syncPixmap();
+//    return;
+
+    if (d->hFlipAnimation.state() == QVariantAnimation::Running)
+        d->hFlipAnimation.stop();
+
+    d->hFlipAnimation.setStartValue(d->hFlipAngle);
+    d->hFlipAnimation.setEndValue(d->hFlipAnimation.endValue().toReal() + 180);
+    d->hFlipAnimation.setEasingCurve(QEasingCurve::Linear);
+    d->hFlipAnimation.setDuration(200);
+    d->hFlipAnimation.start();
+}
+
+void QSingleImageView::flipVertically()
+{
+    Q_D(QSingleImageView);
+
+    QTransform matrix;
     matrix.rotate(180, Qt::YAxis);
     d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
-    d->syncPixmap();
+
+    if (d->vFlipAnimation.state() == QVariantAnimation::Running)
+        d->vFlipAnimation.stop();
+
+    d->vFlipAnimation.setStartValue(d->vFlipAngle);
+    d->vFlipAnimation.setEndValue(d->vFlipAnimation.endValue().toReal() + 180);
+    d->vFlipAnimation.setEasingCurve(QEasingCurve::Linear);
+    d->vFlipAnimation.setDuration(200);
+    d->vFlipAnimation.start();
 }
 
 void QSingleImageView::mousePressEvent(QMouseEvent *e)
@@ -324,6 +401,16 @@ static QPixmap chessBoardBackground()
     return m;
 }
 
+static QPixmap chessBoardBackground(const QRect &rect)
+{
+    int max = qMax(rect.width(), rect.height());
+    QRect r(0, 0, max, max);
+    QPixmap m(r.size());
+    QPainter p(&m);
+    p.drawTiledPixmap(r, ::chessBoardBackground());
+    return m;
+}
+
 void QSingleImageView::paintEvent(QPaintEvent *)
 {
     Q_D(QSingleImageView);
@@ -353,27 +440,31 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     if (verticalScrollBar()->maximum() == 0)
         vvalue = -(viewport()->height() - factor*d->pixmap.height())/2;
 
-    QRect backgroundRect(QPoint(-hvalue, -vvalue), d->pixmap.size()*factor);
-
     QTransform matrix;
     matrix.translate(rect.center().x(), rect.center().y());
+
+    matrix.rotate(d->hFlipAngle, Qt::XAxis);
+    matrix.rotate(d->vFlipAngle, Qt::YAxis);
     matrix.rotate(d->rotationAngle, Qt::ZAxis);
+
     matrix.translate(-rect.center().x(), -rect.center().y());
     p.setTransform(matrix);
 
-    p.save();
-    p.setClipRect(backgroundRect);
-    switch (type) {
-    case QImageViewSettings::None : break;
-    case QImageViewSettings::Chess : p.drawTiledPixmap(viewport()->rect(), ::chessBoardBackground()); break;
-    case QImageViewSettings::SolidColor : p.fillRect(viewport()->rect(), imageBackgroundColor); break;
-    }
-    p.restore();
+    QRect pixmapRect(QPoint(0,0), d->pixmap.size());
+    int max = qMax(d->pixmap.width(), d->pixmap.height());
+
+    QRect backgroundRect(0, 0, max, max);
+    backgroundRect.translate(-(max - d->pixmap.width())/2, -(max - d->pixmap.height())/2);
 
     p.translate(-hvalue, -vvalue);
     p.scale(factor, factor);
 
-    QRect pixmapRect(QPoint(0,0), d->pixmap.size());
+    switch (type) {
+    case QImageViewSettings::None : break;
+    case QImageViewSettings::Chess : p.drawPixmap(backgroundRect, chessBoardBackground(rect)); break;
+    case QImageViewSettings::SolidColor : p.fillRect(backgroundRect, imageBackgroundColor); break;
+    }
+
     p.drawPixmap(pixmapRect, d->pixmap);
 }
 

@@ -25,8 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionRotateRight, SIGNAL(triggered()), m_view, SLOT(rotateRight()));
 
     connect(ui->actionFlipHorizontally, SIGNAL(triggered()), m_view, SLOT(flipHorizontally()));
+    connect(ui->actionFlipVertically, SIGNAL(triggered()), m_view, SLOT(flipVertically()));
 
-    resize(640, 480);
+    resize(800, 600);
 }
 
 MainWindow::~MainWindow()
