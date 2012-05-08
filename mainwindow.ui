@@ -98,6 +98,9 @@
    <property name="text">
     <string>Flip horizontally</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+H</string>
+   </property>
   </action>
   <action name="actionRotateLeft">
    <property name="text">
@@ -118,6 +121,9 @@
   <action name="actionFlipVertically">
    <property name="text">
     <string>Flip vertically</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+V</string>
    </property>
   </action>
  </widget>
