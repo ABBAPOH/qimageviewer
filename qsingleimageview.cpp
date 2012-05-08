@@ -36,6 +36,9 @@ void QSingleImageViewPrivate::setZoomFactor(qreal factor)
     if (zoomFactor == factor)
         return;
 
+    if (image.isNull())
+        return;
+
     if (factor < 0.01)
         factor = 0.01;
 
@@ -152,6 +155,13 @@ void QSingleImageView::setImage(const QImage &image)
     d->image = image;
     d->pixmap = QPixmap::fromImage(d->image);
 
+    if (d->image.isNull()) {
+        d->zoomFactor = 1.0;
+        d->visualZoomFactor = 1.0;
+        d->updateScrollBars();
+        return;
+    }
+
     bestFit();
     viewport()->update();
 }
@@ -173,6 +183,9 @@ void QSingleImageView::zoomOut()
 void QSingleImageView::bestFit()
 {
     Q_D(QSingleImageView);
+
+    if (d->image.isNull())
+        return;
 
     QSize imageSize = d->image.size();
     QSize size = this->size();
@@ -288,6 +301,9 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     QPainter p(viewport());
 
     p.fillRect(viewport()->rect(), backgroundColor);
+
+    if (d->image.isNull())
+        return;
 
     qreal factor = d->visualZoomFactor;
 
