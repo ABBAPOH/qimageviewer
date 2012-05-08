@@ -20,16 +20,27 @@ void ZoomAnimation::updateCurrentValue(const QVariant &value)
     d->setVisualZoomFactor(value.toReal());
 }
 
-RotateAnimation::RotateAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
+QImageViewerRealAnimation::QImageViewerRealAnimation(Func f, QSingleImageViewPrivate *dd, QObject *parent) :
     QVariantAnimation(parent),
-    d(dd)
+    d(dd),
+    func(f)
 {
 }
 
-void RotateAnimation::updateCurrentValue(const QVariant &value)
+void QImageViewerRealAnimation::updateCurrentValue(const QVariant &value)
 {
     if (state() == Running)
-        d->setRotationAngle(value.toReal());
+        (d->*func)(value.toReal());
+}
+
+QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
+    zoomFactor(1.0),
+    visualZoomFactor(1.0),
+    zoomAnimation(this),
+    rotationAngle(0),
+    rotateAnimation(&QSingleImageViewPrivate::setRotationAngle, this),
+    q_ptr(qq)
+{
 }
 
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)

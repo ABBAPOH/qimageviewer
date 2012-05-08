@@ -19,18 +19,21 @@ private:
     QSingleImageViewPrivate *d;
 };
 
-class RotateAnimation : public QVariantAnimation
+class QImageViewerRealAnimation : public QVariantAnimation
 {
     Q_OBJECT
 
+    typedef void (QSingleImageViewPrivate::*Func)(qreal);
+
 public:
-    explicit RotateAnimation(QSingleImageViewPrivate *dd, QObject *parent = 0);
+    explicit QImageViewerRealAnimation(Func f, QSingleImageViewPrivate *dd, QObject *parent = 0);
 
 protected:
     void updateCurrentValue(const QVariant &value);
 
 private:
     QSingleImageViewPrivate *d;
+    Func func;
 };
 
 class QSingleImageViewPrivate
@@ -38,14 +41,7 @@ class QSingleImageViewPrivate
     Q_DECLARE_PUBLIC(QSingleImageView)
 
 public:
-    explicit QSingleImageViewPrivate(QSingleImageView *qq) :
-        zoomFactor(1.0),
-        visualZoomFactor(1.0),
-        zoomAnimation(this),
-        rotateAnimation(this),
-        rotationAngle(0),
-        q_ptr(qq)
-    {}
+    explicit QSingleImageViewPrivate(QSingleImageView *qq);
 
     void setZoomFactor(qreal factor);
     void setVisualZoomFactor(qreal factor);
@@ -68,9 +64,9 @@ public:
     qreal zoomFactor;
     qreal visualZoomFactor;
     ZoomAnimation zoomAnimation;
-    RotateAnimation rotateAnimation;
 
     qreal rotationAngle;
+    QImageViewerRealAnimation rotateAnimation;
 
     QPoint prevPos;
 
