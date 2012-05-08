@@ -28,7 +28,8 @@ RotateAnimation::RotateAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
 
 void RotateAnimation::updateCurrentValue(const QVariant &value)
 {
-    d->setRotationAngle(value.toReal());
+    if (state() == Running)
+        d->setRotationAngle(value.toReal());
 }
 
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
@@ -53,12 +54,6 @@ void QSingleImageViewPrivate::setZoomFactor(qreal factor)
     zoomAnimation.setDuration(75);
     zoomAnimation.setEasingCurve(QEasingCurve::Linear);
     zoomAnimation.start();
-}
-
-void QSingleImageViewPrivate::setImage(const QImage &image)
-{
-    this->image = image;
-    pixmap = QPixmap::fromImage(image);
 }
 
 void QSingleImageViewPrivate::setVisualZoomFactor(qreal factor)
@@ -95,20 +90,43 @@ void QSingleImageViewPrivate::updateScrollBars()
     q->viewport()->update();
 }
 
+void QSingleImageViewPrivate::animationFinished()
+{
+    syncPixmap();
+}
+
+void QSingleImageViewPrivate::stopAnimations()
+{
+    rotateAnimation.stop();
+}
+
+void QSingleImageViewPrivate::syncPixmap()
+{
+    // reset rotate animation
+    rotationAngle = 0.0;
+    rotateAnimation.setStartValue(0);
+    rotateAnimation.setEndValue(0);
+
+    pixmap = QPixmap::fromImage(image);
+
+    Q_Q(QSingleImageView);
+    q->viewport()->update();
+}
+
 void QSingleImageViewPrivate::rotate(bool left)
 {
     Q_Q(QSingleImageView);
 
     QTransform matrix;
     matrix.rotate(left ? -90 : 90, Qt::ZAxis);
-    setImage(image.transformed(matrix, Qt::SmoothTransformation));
+    image = this->image.transformed(matrix, Qt::SmoothTransformation);
     q->viewport()->update();
 
     if (rotateAnimation.state() == QVariantAnimation::Running)
         rotateAnimation.stop();
 
-    rotateAnimation.setStartValue(left ? 90 : -90);
-    rotateAnimation.setEndValue(0);
+    rotateAnimation.setStartValue(rotationAngle);
+    rotateAnimation.setEndValue(rotateAnimation.endValue().toReal() + (left ? - 90 : 90));
     rotateAnimation.setEasingCurve(QEasingCurve::Linear);
     rotateAnimation.setDuration(75);
     rotateAnimation.start();
@@ -126,6 +144,7 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QSingleImageViewPrivate(this))
 {
+    Q_D(QSingleImageView);
 //    setImage(QImage("/Users/arch/Pictures/anti112 .jpg"));
 //    setImage(QImage("/Users/arch/Pictures/archon.jpg"));
     setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
@@ -134,6 +153,8 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     verticalScrollBar()->setSingleStep(10);
 
     viewport()->setCursor(Qt::OpenHandCursor);
+
+    connect(&d->rotateAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
 }
 
 QSingleImageView::~QSingleImageView()
@@ -153,7 +174,11 @@ void QSingleImageView::setImage(const QImage &image)
     Q_D(QSingleImageView);
 
     d->image = image;
-    d->pixmap = QPixmap::fromImage(d->image);
+
+    d->stopAnimations();
+    d->syncPixmap();
+
+//    d->pixmap = QPixmap::fromImage(d->image);
 
     if (d->image.isNull()) {
         d->zoomFactor = 1.0;
@@ -236,8 +261,8 @@ void QSingleImageView::flipHorizontally()
 
     QTransform matrix;
     matrix.rotate(180, Qt::YAxis);
-    d->setImage(d->image.transformed(matrix, Qt::SmoothTransformation));
-    viewport()->update();
+    d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
+    d->syncPixmap();
 }
 
 void QSingleImageView::mousePressEvent(QMouseEvent *e)

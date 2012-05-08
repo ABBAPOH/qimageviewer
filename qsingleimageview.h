@@ -41,6 +41,7 @@ protected:
     QSingleImageViewPrivate *d_ptr;
 
     Q_PRIVATE_SLOT(d_func(), void updateScrollBars())
+    Q_PRIVATE_SLOT(d_func(), void animationFinished())
 };
 
 #endif // QSINGLEIMAGEVIEW_H

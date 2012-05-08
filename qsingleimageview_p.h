@@ -47,8 +47,6 @@ public:
         q_ptr(qq)
     {}
 
-    void setImage(const QImage &image);
-
     void setZoomFactor(qreal factor);
     void setVisualZoomFactor(qreal factor);
 
@@ -56,6 +54,11 @@ public:
     void setRotationAngle(qreal angle);
 
     void updateScrollBars();
+
+    void animationFinished();
+    void stopAnimations();
+
+    void syncPixmap();
 
 public:
     QImage image;
