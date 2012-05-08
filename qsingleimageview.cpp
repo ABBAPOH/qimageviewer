@@ -453,18 +453,14 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     p.setTransform(matrix);
 
     QRect pixmapRect(QPoint(0,0), d->pixmap.size());
-    int max = qMax(d->pixmap.width(), d->pixmap.height());
-
-    QRect backgroundRect(0, 0, max, max);
-    backgroundRect.translate(-(max - d->pixmap.width())/2, -(max - d->pixmap.height())/2);
 
     p.translate(-hvalue, -vvalue);
     p.scale(factor, factor);
 
     switch (type) {
     case QImageViewSettings::None : break;
-    case QImageViewSettings::Chess : p.drawPixmap(backgroundRect, chessBoardBackground(rect)); break;
-    case QImageViewSettings::SolidColor : p.fillRect(backgroundRect, imageBackgroundColor); break;
+    case QImageViewSettings::Chess : p.drawPixmap(pixmapRect, chessBoardBackground(rect)); break;
+    case QImageViewSettings::SolidColor : p.fillRect(pixmapRect, imageBackgroundColor); break;
     }
 
     p.drawPixmap(pixmapRect, d->pixmap);
