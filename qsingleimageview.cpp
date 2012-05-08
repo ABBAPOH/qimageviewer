@@ -440,14 +440,16 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     if (verticalScrollBar()->maximum() == 0)
         vvalue = -(viewport()->height() - factor*d->pixmap.height())/2;
 
+    QPoint center = QPoint(factor*d->pixmap.width()/2 - hvalue, factor*d->pixmap.height()/2 - vvalue);
+
     QTransform matrix;
-    matrix.translate(rect.center().x(), rect.center().y());
+    matrix.translate(center.x(), center.y());
 
     matrix.rotate(d->hFlipAngle, Qt::XAxis);
     matrix.rotate(d->vFlipAngle, Qt::YAxis);
     matrix.rotate(d->rotationAngle, Qt::ZAxis);
 
-    matrix.translate(-rect.center().x(), -rect.center().y());
+    matrix.translate(-center.x(), -center.y());
     p.setTransform(matrix);
 
     QRect pixmapRect(QPoint(0,0), d->pixmap.size());
