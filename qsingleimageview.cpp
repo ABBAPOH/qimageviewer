@@ -324,8 +324,9 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     QColor backgroundColor = settings->backgroundColor();
 
     QPainter p(viewport());
+    QRect rect = viewport()->rect();
 
-    p.fillRect(viewport()->rect(), backgroundColor);
+    p.fillRect(rect, backgroundColor);
 
     if (d->image.isNull())
         return;
@@ -343,9 +344,11 @@ void QSingleImageView::paintEvent(QPaintEvent *)
 
     QRect backgroundRect(QPoint(-hvalue, -vvalue), d->pixmap.size()*factor);
 
-    p.translate(backgroundRect.center());
-    p.rotate(d->rotationAngle);
-    p.translate(-backgroundRect.center());
+    QTransform matrix;
+    matrix.translate(rect.center().x(), rect.center().y());
+    matrix.rotate(d->rotationAngle, Qt::ZAxis);
+    matrix.translate(-rect.center().x(), -rect.center().y());
+    p.setTransform(matrix);
 
     p.save();
     p.setClipRect(backgroundRect);
