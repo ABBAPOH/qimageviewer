@@ -360,11 +360,19 @@ static QPixmap chessBoardBackground()
 
 static QPixmap chessBoardBackground(const QRect &rect)
 {
-    int max = qMax(rect.width(), rect.height());
-    QRect r(0, 0, max, max);
-    QPixmap m(r.size());
+    int w = rect.width(), h = rect.height();
+
+    QPixmap m(w, h);
     QPainter p(&m);
-    p.drawTiledPixmap(r, ::chessBoardBackground());
+    p.translate(w/2.0, h/2.0);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.rotate(90);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.rotate(90);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.rotate(90);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+
     return m;
 }
 
@@ -402,26 +410,25 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     QTransform matrix;
     matrix.translate(center.x(), center.y());
 
-
     for (int i = d->runningAnimations.count() - 1; i >= 0; i--) {
         AxisAnimation *animation = d->runningAnimations.at(i);
         matrix.rotate(animation->angle(), animation->axis());
     }
 
-    matrix.translate(-center.x(), -center.y());
     p.setTransform(matrix);
+    rect.translate(-rect.center());
 
-    QRect pixmapRect(QPoint(0,0), d->pixmap.size());
-
-    p.translate(-hvalue, -vvalue);
-    p.scale(factor, factor);
+    QRect pixmapRect(QPoint(-d->pixmap.width()/2, -d->pixmap.height()/2), d->pixmap.size());
+    QSize backgroundSize = d->pixmap.size()*factor;
+    QRect backgroundRect(QPoint(-backgroundSize.width()/2, -backgroundSize.height()/2), backgroundSize);
 
     switch (type) {
     case QImageViewSettings::None : break;
-    case QImageViewSettings::Chess : p.drawPixmap(pixmapRect, chessBoardBackground(rect)); break;
-    case QImageViewSettings::SolidColor : p.fillRect(pixmapRect, imageBackgroundColor); break;
+    case QImageViewSettings::Chess : p.drawPixmap(backgroundRect, chessBoardBackground(backgroundRect)); break;
+    case QImageViewSettings::SolidColor : p.fillRect(backgroundRect, imageBackgroundColor); break;
     }
 
+    p.scale(factor, factor);
     p.drawPixmap(pixmapRect, d->pixmap);
 }
 
