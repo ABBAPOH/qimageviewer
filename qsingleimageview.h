@@ -9,14 +9,25 @@ class QSingleImageView : public QAbstractScrollArea
     Q_OBJECT
     Q_DECLARE_PRIVATE(QSingleImageView)
 
+    Q_PROPERTY(MouseMode mouseMode READ mouseMode WRITE setMouseMode NOTIFY mouseModeChanged)
+
 public:
+    enum MouseMode {
+        MouseModeMove
+    };
+    Q_ENUMS(MouseMode)
+
     explicit QSingleImageView(QWidget *parent = 0);
     ~QSingleImageView();
 
     QImage image() const;
     void setImage(const QImage &image);
 
+    MouseMode mouseMode() const;
+    void setMouseMode(MouseMode mode);
+
 signals:
+    void mouseModeChanged(MouseMode mode);
 
 public slots:
     void zoomIn();

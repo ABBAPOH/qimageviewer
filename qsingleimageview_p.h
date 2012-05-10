@@ -81,6 +81,8 @@ public:
 
 public:
     QImage image;
+    QSingleImageView::MouseMode mouseMode;
+
     QPixmap originalPixmap;
     QPixmap pixmap;
 

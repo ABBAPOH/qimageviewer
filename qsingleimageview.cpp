@@ -46,6 +46,7 @@ void AxisAnimation::updateCurrentValue(const QVariant &/*value*/)
 }
 
 QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
+    mouseMode(QSingleImageView::MouseModeMove),
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
@@ -240,6 +241,23 @@ void QSingleImageView::setImage(const QImage &image)
 
     bestFit();
     viewport()->update();
+}
+
+QSingleImageView::MouseMode QSingleImageView::mouseMode() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->mouseMode;
+}
+
+void QSingleImageView::setMouseMode(QSingleImageView::MouseMode mode)
+{
+    Q_D(QSingleImageView);
+
+    if (d->mouseMode != mode) {
+        d->mouseMode = mode;
+        emit mouseModeChanged(mode);
+    }
 }
 
 void QSingleImageView::zoomIn()
