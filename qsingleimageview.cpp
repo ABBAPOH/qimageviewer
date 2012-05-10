@@ -1,6 +1,8 @@
 #include "qsingleimageview.h"
 #include "qsingleimageview_p.h"
 
+#include <QtGui/QApplication>
+#include <QtGui/QClipboard>
 #include <QtGui/QPainter>
 #include <QtGui/QResizeEvent>
 #include <QtGui/QScrollBar>
@@ -8,6 +10,12 @@
 #include <QDebug>
 
 #include "qimageviewsettings.h"
+
+QPoint adjustPoint(QPoint p, qreal factor)
+{
+//    QPointF pf = p;
+    return QPoint((int)(p.x()/factor)*factor, (int)(p.y()/factor)*factor);
+}
 
 ZoomAnimation::ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
     QVariantAnimation(parent),
@@ -46,16 +54,18 @@ void AxisAnimation::updateCurrentValue(const QVariant &/*value*/)
 }
 
 QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
-    mouseMode(QSingleImageView::MouseModeMove),
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
+    mousePressed(false),
     q_ptr(qq)
 {
 }
 
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
 {
+    Q_Q(QSingleImageView);
+
     if (zoomFactor == factor)
         return;
 
@@ -64,6 +74,8 @@ void QSingleImageViewPrivate::setZoomFactor(qreal factor)
 
     if (factor < 0.01)
         factor = 0.01;
+
+    q->clearSelection();
 
     zoomFactor = factor;
 //    visualZoomFactor = factor;
@@ -183,6 +195,57 @@ QPointF QSingleImageViewPrivate::getCenter() const
     return QPointF(factor*pixmap.width()/2.0 - hvalue, factor*pixmap.height()/2.0 - vvalue);
 }
 
+static QPoint containingPoint(QPoint pos, const QRect &rect)
+{
+    pos.setX(qMax(pos.x(), rect.left()));
+    pos.setY(qMax(pos.y(), rect.top()));
+    pos.setX(qMin(pos.x(), rect.right()));
+    pos.setY(qMin(pos.y(), rect.bottom()));
+    return pos;
+}
+
+void QSingleImageViewPrivate::drawSelection(QPainter *p, const QRect &rect, const QRect &imageRect)
+{
+    if (mouseMode != QSingleImageView::MouseModeSelect)
+        return;
+
+    QPointF center = getCenter();
+
+    // rect in painter's coordinates
+    QRect selectionRect(::adjustPoint(startPos, zoomFactor), ::adjustPoint(pos, zoomFactor));
+    selectionRect.translate(-center.x(), -center.y());
+    selectionRect = selectionRect.intersect(rect);
+
+    if (selectionRect.isNull())
+        return;
+
+    p->setPen(QPen(Qt::lightGray, 1, Qt::DashLine, Qt::RoundCap));
+    p->drawRect(selectionRect);
+
+    QRect imageSelectionRect = imageRect.intersect(selectionRect);
+
+    p->setPen(QPen(Qt::black, 1, Qt::DashLine, Qt::RoundCap));
+    p->drawRect(imageSelectionRect);
+
+    QString text = QSingleImageView::tr("%1 x %2").
+            arg(abs(imageSelectionRect.width()/visualZoomFactor)).
+            arg(abs(imageSelectionRect.height()/visualZoomFactor));
+
+    int textWidth = p->fontMetrics().width(text);
+    int textHeight = p->fontMetrics().height();
+
+    QPoint textPos = pos + rect.topLeft();
+    textPos = containingPoint(textPos, rect);
+
+    textPos.setX(qMax(textPos.x(), rect.left()));
+    textPos.setY(qMax(textPos.y(), rect.top() + textHeight));
+    textPos.setX(qMin(textPos.x(), rect.right() - textWidth));
+    textPos.setY(qMin(textPos.y(), rect.bottom() - textHeight));
+
+    p->setPen(Qt::black);
+    p->drawText(textPos, text);
+}
+
 void QSingleImageViewPrivate::rotate(bool left)
 {
     Q_Q(QSingleImageView);
@@ -206,7 +269,7 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     horizontalScrollBar()->setSingleStep(10);
     verticalScrollBar()->setSingleStep(10);
 
-    viewport()->setCursor(Qt::OpenHandCursor);
+    setMouseMode(MouseModeSelect);
 }
 
 QSingleImageView::~QSingleImageView()
@@ -255,9 +318,45 @@ void QSingleImageView::setMouseMode(QSingleImageView::MouseMode mode)
     Q_D(QSingleImageView);
 
     if (d->mouseMode != mode) {
+        if (mode == MouseModeMove)
+            viewport()->setCursor(Qt::OpenHandCursor);
+        else
+            viewport()->setCursor(Qt::ArrowCursor);
+
         d->mouseMode = mode;
         emit mouseModeChanged(mode);
     }
+}
+
+QRect QSingleImageView::selectedImageRect() const
+{
+    Q_D(const QSingleImageView);
+
+    if (d->startPos == d->pos)
+        return QRect();
+
+    QPointF center = d->getCenter();
+
+    QRectF selectionRect(d->startPos, d->pos);
+    selectionRect = selectionRect.normalized();
+    selectionRect.translate(-center.x(), -center.y());
+
+    qreal factor = d->visualZoomFactor;
+    selectionRect = QRectF(selectionRect.topLeft()/factor, selectionRect.bottomRight()/factor);
+
+    QRect pixmapRect(QPoint(0, 0), d->pixmap.size());
+    pixmapRect.translate(-pixmapRect.center());
+
+    QRect result = QRectF(selectionRect.intersect(pixmapRect)).toAlignedRect();
+    result.translate(d->pixmap.width()/2, d->pixmap.height()/2);
+    return result;
+}
+
+QImage QSingleImageView::selectedImage() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->image.copy(selectedImageRect());
 }
 
 void QSingleImageView::zoomIn()
@@ -346,13 +445,36 @@ void QSingleImageView::flipVertically()
     d->addAxisAnimation(Qt::YAxis, 180.0, 200);
 }
 
+void QSingleImageView::clearSelection()
+{
+    Q_D(QSingleImageView);
+
+    d->startPos = d->pos = QPoint();
+    viewport()->update();
+}
+
+void QSingleImageView::copy()
+{
+    QImage image = selectedImage();
+
+    QClipboard *clipboard = qApp->clipboard();
+    clipboard->clear();
+    clipboard->setImage(image);
+}
+
 void QSingleImageView::mousePressEvent(QMouseEvent *e)
 {
     Q_D(QSingleImageView);
 
+    d->mousePressed = true;
+    d->startPos = e->pos();
+    d->pos = e->pos();
     d->prevPos = e->pos();
 
-    viewport()->setCursor(Qt::ClosedHandCursor);
+    if (d->mouseMode == MouseModeMove)
+        viewport()->setCursor(Qt::ClosedHandCursor);
+
+    viewport()->update();
 }
 
 void QSingleImageView::mouseMoveEvent(QMouseEvent *e)
@@ -364,19 +486,46 @@ void QSingleImageView::mouseMoveEvent(QMouseEvent *e)
     int dx = d->prevPos.x() - pos.x();
     int dy = d->prevPos.y() - pos.y();
 
-    horizontalScrollBar()->setValue(horizontalScrollBar()->value() + dx);
-    verticalScrollBar()->setValue(verticalScrollBar()->value() + dy);
+    if (d->mouseMode == MouseModeMove) {
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() + dx);
+        verticalScrollBar()->setValue(verticalScrollBar()->value() + dy);
+    }
 
+    d->pos = pos;
     d->prevPos = pos;
+
+    viewport()->update();
 }
 
 void QSingleImageView::mouseReleaseEvent(QMouseEvent *)
 {
     Q_D(QSingleImageView);
 
+//    d->startPos = QPoint();
+//    d->pos = QPoint();
     d->prevPos = QPoint();
 
-    viewport()->setCursor(Qt::OpenHandCursor);
+    if (d->mouseMode == MouseModeMove)
+        viewport()->setCursor(Qt::OpenHandCursor);
+    d->mousePressed = false;
+
+    viewport()->update();
+}
+
+void QSingleImageView::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key()) {
+    case Qt::Key_Escape :
+        clearSelection();
+        break;
+    case Qt::Key_C :
+        if (e->modifiers() & Qt::ControlModifier)
+            copy();
+    default:
+        break;
+    }
+
+    QAbstractScrollArea::keyPressEvent(e);
 }
 
 static QPixmap chessBoardBackground()
@@ -445,6 +594,8 @@ void QSingleImageView::paintEvent(QPaintEvent *)
         return;
 
     QPointF center = d->getCenter();
+    p.setPen(Qt::red);
+    p.drawEllipse(center, 500, 500);
 
     QTransform matrix;
     matrix.translate(center.x(), center.y());
@@ -455,7 +606,6 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     }
 
     p.setTransform(matrix);
-    rect.translate(-rect.center());
 
     qreal factor = d->visualZoomFactor;
     QSize backgroundSize = d->pixmap.size()*factor;
@@ -473,11 +623,21 @@ void QSingleImageView::paintEvent(QPaintEvent *)
         break;
     }
 
+    p.save();
     p.scale(factor, factor);
 
     QRectF pixmapRect(QPointF(0, 0), d->pixmap.size());
     pixmapRect.translate(-pixmapRect.center());
     p.drawPixmap(pixmapRect, d->pixmap, QRectF(QPointF(0, 0), d->pixmap.size()));
+
+    p.restore();
+
+    rect.translate(-center.x(), -center.y());
+
+    if (d->startPos == d->pos)
+        return;
+
+    d->drawSelection(&p, rect, backgroundRect.toAlignedRect());
 }
 
 bool QSingleImageView::viewportEvent(QEvent *e)

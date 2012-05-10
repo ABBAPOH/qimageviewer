@@ -13,7 +13,8 @@ class QSingleImageView : public QAbstractScrollArea
 
 public:
     enum MouseMode {
-        MouseModeMove
+        MouseModeMove,
+        MouseModeSelect
     };
     Q_ENUMS(MouseMode)
 
@@ -25,6 +26,9 @@ public:
 
     MouseMode mouseMode() const;
     void setMouseMode(MouseMode mode);
+
+    QRect selectedImageRect() const;
+    QImage selectedImage() const;
 
 signals:
     void mouseModeChanged(MouseMode mode);
@@ -41,10 +45,16 @@ public slots:
     void flipHorizontally();
     void flipVertically();
 
+    void clearSelection();
+
+    void copy();
+
 protected:
     void mousePressEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
+
+    void keyPressEvent(QKeyEvent *);
 
     void paintEvent(QPaintEvent *);
     bool viewportEvent(QEvent *);

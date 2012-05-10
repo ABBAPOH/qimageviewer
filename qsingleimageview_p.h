@@ -78,6 +78,7 @@ public:
     void syncPixmap();
 
     QPointF getCenter() const;
+    void drawSelection(QPainter *p, const QRect &rect, const QRect &imageRect);
 
 public:
     QImage image;
@@ -92,6 +93,9 @@ public:
 
     QList<AxisAnimation *> runningAnimations;
 
+    bool mousePressed;
+    QPoint startPos;
+    QPoint pos;
     QPoint prevPos;
 
 private:
