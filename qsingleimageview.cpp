@@ -33,16 +33,22 @@ void QImageViewerRealAnimation::updateCurrentValue(const QVariant &value)
         (d->*func)(value.toReal());
 }
 
+AxisAnimation::AxisAnimation(Qt::Axis axis, QSingleImageViewPrivate *dd, QObject *parent):
+    QVariantAnimation(parent),
+    d(dd),
+    m_axis(axis)
+{
+}
+
+void AxisAnimation::updateCurrentValue(const QVariant &/*value*/)
+{
+    d->updateViewport();
+}
+
 QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
-    rotationAngle(0),
-    rotateAnimation(&QSingleImageViewPrivate::setRotationAngle, this),
-    hFlipAngle(0),
-    hFlipAnimation(&QSingleImageViewPrivate::setHFlipAngle, this),
-    vFlipAngle(0),
-    vFlipAnimation(&QSingleImageViewPrivate::setVFlipAngle, this),
     q_ptr(qq)
 {
 }
@@ -111,51 +117,51 @@ void QSingleImageViewPrivate::animationFinished()
         syncPixmap();
 }
 
-void QSingleImageViewPrivate::stopAnimations()
-{
-    rotateAnimation.stop();
-    vFlipAnimation.stop();
-    hFlipAnimation.stop();
-}
-
-void QSingleImageViewPrivate::syncPixmap()
-{
-    // reset rotate animation
-    rotationAngle = 0.0;
-    rotateAnimation.setStartValue(0);
-    rotateAnimation.setEndValue(0);
-
-    hFlipAngle = 0.0;
-    hFlipAnimation.setStartValue(0);
-    hFlipAnimation.setEndValue(0);
-
-    vFlipAngle = 0.0;
-    vFlipAnimation.setStartValue(0);
-    vFlipAnimation.setEndValue(0);
-
-    pixmap = QPixmap::fromImage(image);
-
-    updateViewport();
-}
-
 void QSingleImageViewPrivate::updateViewport()
 {
     Q_Q(QSingleImageView);
     q->viewport()->update();
 }
 
+void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs)
+{
+    Q_Q(QSingleImageView);
+
+    AxisAnimation *animation = new AxisAnimation(axis, this, q);
+    animation->setStartValue(0.0);
+    animation->setEndValue(endValue);
+    animation->setEasingCurve(QEasingCurve::InOutQuad);
+    animation->setDuration(msecs);
+    animation->start();
+    runningAnimations.append(animation);
+    QObject::connect(animation, SIGNAL(finished()), q, SLOT(animationFinished()));
+}
+
 bool QSingleImageViewPrivate::hasRunningAnimations()
 {
-    if (rotateAnimation.state() == QVariantAnimation::Running)
-        return true;
-
-    if (hFlipAnimation.state() == QVariantAnimation::Running)
-        return true;
-
-    if (vFlipAnimation.state() == QVariantAnimation::Running)
-        return true;
+    foreach (AxisAnimation *animation, runningAnimations) {
+        if (animation->state() == QVariantAnimation::Running)
+            return true;
+    }
 
     return false;
+}
+
+void QSingleImageViewPrivate::stopAnimations()
+{
+    foreach (AxisAnimation *animation, runningAnimations) {
+        animation->stop();
+    }
+}
+
+void QSingleImageViewPrivate::syncPixmap()
+{
+    pixmap = QPixmap::fromImage(image);
+
+    qDeleteAll(runningAnimations);
+    runningAnimations.clear();
+
+    updateViewport();
 }
 
 void QSingleImageViewPrivate::rotate(bool left)
@@ -167,42 +173,13 @@ void QSingleImageViewPrivate::rotate(bool left)
     image = this->image.transformed(matrix, Qt::SmoothTransformation);
     q->viewport()->update();
 
-    if (rotateAnimation.state() == QVariantAnimation::Running)
-        rotateAnimation.stop();
-
-    rotateAnimation.setStartValue(rotationAngle);
-    rotateAnimation.setEndValue(rotateAnimation.endValue().toReal() + (left ? - 90 : 90));
-    rotateAnimation.setEasingCurve(QEasingCurve::Linear);
-    rotateAnimation.setDuration(200);
-    rotateAnimation.start();
-}
-
-void QSingleImageViewPrivate::setRotationAngle(qreal angle)
-{
-    rotationAngle = angle;
-
-    updateViewport();
-}
-
-void QSingleImageViewPrivate::setHFlipAngle(qreal angle)
-{
-    hFlipAngle = angle;
-
-    updateViewport();
-}
-
-void QSingleImageViewPrivate::setVFlipAngle(qreal angle)
-{
-    vFlipAngle = angle;
-
-    updateViewport();
+    addAxisAnimation(Qt::ZAxis, left ? - 90.0 : 90.0, 150);
 }
 
 QSingleImageView::QSingleImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QSingleImageViewPrivate(this))
 {
-    Q_D(QSingleImageView);
 //    setImage(QImage("/Users/arch/Pictures/anti112 .jpg"));
 //    setImage(QImage("/Users/arch/Pictures/archon.jpg"));
     setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
@@ -211,10 +188,6 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     verticalScrollBar()->setSingleStep(10);
 
     viewport()->setCursor(Qt::OpenHandCursor);
-
-    connect(&d->rotateAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
-    connect(&d->hFlipAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
-    connect(&d->vFlipAnimation, SIGNAL(finished()), this, SLOT(animationFinished()));
 }
 
 QSingleImageView::~QSingleImageView()
@@ -322,17 +295,8 @@ void QSingleImageView::flipHorizontally()
     QTransform matrix;
     matrix.rotate(180, Qt::XAxis);
     d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
-//    d->syncPixmap();
-//    return;
 
-    if (d->hFlipAnimation.state() == QVariantAnimation::Running)
-        d->hFlipAnimation.stop();
-
-    d->hFlipAnimation.setStartValue(d->hFlipAngle);
-    d->hFlipAnimation.setEndValue(d->hFlipAnimation.endValue().toReal() + 180);
-    d->hFlipAnimation.setEasingCurve(QEasingCurve::Linear);
-    d->hFlipAnimation.setDuration(200);
-    d->hFlipAnimation.start();
+    d->addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
 
 void QSingleImageView::flipVertically()
@@ -343,14 +307,7 @@ void QSingleImageView::flipVertically()
     matrix.rotate(180, Qt::YAxis);
     d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
 
-    if (d->vFlipAnimation.state() == QVariantAnimation::Running)
-        d->vFlipAnimation.stop();
-
-    d->vFlipAnimation.setStartValue(d->vFlipAngle);
-    d->vFlipAnimation.setEndValue(d->vFlipAnimation.endValue().toReal() + 180);
-    d->vFlipAnimation.setEasingCurve(QEasingCurve::Linear);
-    d->vFlipAnimation.setDuration(200);
-    d->vFlipAnimation.start();
+    d->addAxisAnimation(Qt::YAxis, 180.0, 200);
 }
 
 void QSingleImageView::mousePressEvent(QMouseEvent *e)
@@ -445,9 +402,11 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     QTransform matrix;
     matrix.translate(center.x(), center.y());
 
-    matrix.rotate(d->hFlipAngle, Qt::XAxis);
-    matrix.rotate(d->vFlipAngle, Qt::YAxis);
-    matrix.rotate(d->rotationAngle, Qt::ZAxis);
+
+    for (int i = d->runningAnimations.count() - 1; i >= 0; i--) {
+        AxisAnimation *animation = d->runningAnimations.at(i);
+        matrix.rotate(animation->angle(), animation->axis());
+    }
 
     matrix.translate(-center.x(), -center.y());
     p.setTransform(matrix);

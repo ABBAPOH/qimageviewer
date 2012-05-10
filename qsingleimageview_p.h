@@ -36,6 +36,24 @@ private:
     Func func;
 };
 
+class AxisAnimation : public QVariantAnimation
+{
+    Q_OBJECT
+
+public:
+    explicit AxisAnimation(Qt::Axis axis, QSingleImageViewPrivate *dd, QObject *parent = 0);
+
+    Qt::Axis axis() const { return m_axis; }
+    qreal angle() const { return currentValue().toReal(); }
+
+protected:
+    void updateCurrentValue(const QVariant &value);
+
+private:
+    QSingleImageViewPrivate *d;
+    Qt::Axis m_axis;
+};
+
 class QSingleImageViewPrivate
 {
     Q_DECLARE_PUBLIC(QSingleImageView)
@@ -47,20 +65,17 @@ public:
     void setVisualZoomFactor(qreal factor);
 
     void rotate(bool left);
-    void setRotationAngle(qreal angle);
-
-    void setHFlipAngle(qreal angle);
-    void setVFlipAngle(qreal angle);
 
     void updateScrollBars();
 
     void animationFinished();
-    void stopAnimations();
 
-    void syncPixmap();
     void updateViewport();
 
+    void addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs);
     bool hasRunningAnimations();
+    void stopAnimations();
+    void syncPixmap();
 
 public:
     QImage image;
@@ -71,14 +86,7 @@ public:
     qreal visualZoomFactor;
     ZoomAnimation zoomAnimation;
 
-    qreal rotationAngle;
-    QImageViewerRealAnimation rotateAnimation;
-
-    qreal hFlipAngle;
-    QImageViewerRealAnimation hFlipAnimation;
-
-    qreal vFlipAngle;
-    QImageViewerRealAnimation vFlipAnimation;
+    QList<AxisAnimation *> runningAnimations;
 
     QPoint prevPos;
 
