@@ -358,9 +358,9 @@ static QPixmap chessBoardBackground()
     return m;
 }
 
-static QPixmap chessBoardBackground(const QRect &rect)
+static QPixmap chessBoardBackground(const QSize &size)
 {
-    int w = rect.width(), h = rect.height();
+    int w = size.width(), h = size.height();
 
     QPixmap m(w, h);
     QPainter p(&m);
@@ -405,7 +405,7 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     if (verticalScrollBar()->maximum() == 0)
         vvalue = -(viewport()->height() - factor*d->pixmap.height())/2;
 
-    QPoint center = QPoint(factor*d->pixmap.width()/2 - hvalue, factor*d->pixmap.height()/2 - vvalue);
+    QPointF center = QPoint(factor*d->pixmap.width()/2.0 - hvalue, factor*d->pixmap.height()/2.0 - vvalue);
 
     QTransform matrix;
     matrix.translate(center.x(), center.y());
@@ -418,18 +418,26 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     p.setTransform(matrix);
     rect.translate(-rect.center());
 
-    QRect pixmapRect(QPoint(-d->pixmap.width()/2, -d->pixmap.height()/2), d->pixmap.size());
     QSize backgroundSize = d->pixmap.size()*factor;
-    QRect backgroundRect(QPoint(-backgroundSize.width()/2, -backgroundSize.height()/2), backgroundSize);
+    QRectF backgroundRect(QPoint(0, 0), backgroundSize);
+    backgroundRect.translate(-backgroundRect.center());
 
     switch (type) {
-    case QImageViewSettings::None : break;
-    case QImageViewSettings::Chess : p.drawPixmap(backgroundRect, chessBoardBackground(backgroundRect)); break;
-    case QImageViewSettings::SolidColor : p.fillRect(backgroundRect, imageBackgroundColor); break;
+    case QImageViewSettings::None :
+        break;
+    case QImageViewSettings::Chess :
+        p.drawPixmap(backgroundRect, chessBoardBackground(backgroundSize), QRectF(QPointF(0, 0), backgroundSize));
+        break;
+    case QImageViewSettings::SolidColor :
+        p.fillRect(backgroundRect, imageBackgroundColor);
+        break;
     }
 
     p.scale(factor, factor);
-    p.drawPixmap(pixmapRect, d->pixmap);
+
+    QRectF pixmapRect(QPointF(0, 0), d->pixmap.size());
+    pixmapRect.translate(-pixmapRect.center());
+    p.drawPixmap(pixmapRect, d->pixmap, QRectF(QPointF(0, 0), d->pixmap.size()));
 }
 
 bool QSingleImageView::viewportEvent(QEvent *e)
