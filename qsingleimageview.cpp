@@ -360,6 +360,16 @@ static QPixmap chessBoardBackground()
 
 static QPixmap chessBoardBackground(const QSize &size)
 {
+    if (size.isEmpty())
+        return QPixmap();
+
+    static QSize previousSize;
+    static QPixmap cachedPismap;
+
+    if (size == previousSize) {
+        return cachedPismap;
+    }
+
     int w = size.width(), h = size.height();
 
     QPixmap m(w, h);
@@ -372,6 +382,10 @@ static QPixmap chessBoardBackground(const QSize &size)
     p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
     p.rotate(90);
     p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.end();
+
+    previousSize = size;
+    cachedPismap = m;
 
     return m;
 }
