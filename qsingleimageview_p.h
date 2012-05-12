@@ -105,6 +105,7 @@ public:
     void rotate(bool left);
     void flipHorizontally();
     void flipVertically();
+    void setCanCopy(bool can);
     void setModified(bool m);
 
     void updateScrollBars();
@@ -141,6 +142,8 @@ public:
     QPoint startPos;
     QPoint pos;
     QPoint prevPos;
+
+    bool canCopy;
 
     QUndoStack *undoStack;
     int undoStackIndex;

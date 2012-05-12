@@ -92,7 +92,9 @@ void MainWindow::setupConnections()
     connect(m_view, SIGNAL(canUndoChanged(bool)), ui->actionUndo, SLOT(setEnabled(bool)));
 
     connect(ui->actionCopy, SIGNAL(triggered()), m_view, SLOT(copy()));
+    connect(m_view, SIGNAL(canCopyChanged(bool)), ui->actionCopy, SLOT(setEnabled(bool)));
     connect(ui->actionCut, SIGNAL(triggered()), m_view, SLOT(cut()));
+    connect(m_view, SIGNAL(canCopyChanged(bool)), ui->actionCut, SLOT(setEnabled(bool)));
 
     connect(ui->actionMoveTool, SIGNAL(triggered(bool)), this, SLOT(onMoveToolTriggered(bool)));
     connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));

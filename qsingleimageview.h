@@ -10,6 +10,7 @@ class QSingleImageView : public QAbstractScrollArea
     Q_DECLARE_PRIVATE(QSingleImageView)
 
     Q_PROPERTY(MouseMode mouseMode READ mouseMode WRITE setMouseMode NOTIFY mouseModeChanged)
+    Q_PROPERTY(bool canCopy READ canRedo NOTIFY canCopyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged)
     Q_PROPERTY(bool modified READ isModified WRITE setModified NOTIFY modifiedChanged)
@@ -23,6 +24,8 @@ public:
 
     explicit QSingleImageView(QWidget *parent = 0);
     ~QSingleImageView();
+
+    bool canCopy() const;
 
     bool canRedo() const;
     bool canUndo() const;
@@ -41,6 +44,7 @@ public:
 
 signals:
     void mouseModeChanged(MouseMode mode);
+    void canCopyChanged(bool canCopy);
     void canRedoChanged(bool canRedo);
     void canUndoChanged(bool canUndo);
     void modifiedChanged(bool modified);

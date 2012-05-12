@@ -177,6 +177,7 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     visualZoomFactor(1.0),
     zoomAnimation(this),
     mousePressed(false),
+    canCopy(false),
     undoStack(new QUndoStack(qq)),
     undoStackIndex(0),
     modified(0),
@@ -470,6 +471,16 @@ void QSingleImageViewPrivate::flipVertically()
     addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
 
+void QSingleImageViewPrivate::setCanCopy(bool can)
+{
+    Q_Q(QSingleImageView);
+
+    if (canCopy != can) {
+        canCopy = can;
+        emit q->canCopyChanged(canCopy);
+    }
+}
+
 void QSingleImageViewPrivate::setModified(bool m)
 {
     Q_Q(QSingleImageView);
@@ -497,6 +508,13 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
 QSingleImageView::~QSingleImageView()
 {
     delete d_ptr;
+}
+
+bool QSingleImageView::canCopy() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->canCopy;
 }
 
 bool QSingleImageView::canRedo() const
@@ -680,6 +698,7 @@ void QSingleImageView::clearSelection()
     Q_D(QSingleImageView);
 
     d->startPos = d->pos = QPoint();
+    d->setCanCopy(false);
     viewport()->update();
 }
 
@@ -726,6 +745,8 @@ void QSingleImageView::mousePressEvent(QMouseEvent *e)
 
     if (d->mouseMode == MouseModeMove)
         viewport()->setCursor(Qt::ClosedHandCursor);
+    else
+        d->setCanCopy(false);
 
     viewport()->update();
 }
@@ -739,13 +760,15 @@ void QSingleImageView::mouseMoveEvent(QMouseEvent *e)
     int dx = d->prevPos.x() - pos.x();
     int dy = d->prevPos.y() - pos.y();
 
+    d->pos = pos;
+    d->prevPos = pos;
+
     if (d->mouseMode == MouseModeMove) {
         horizontalScrollBar()->setValue(horizontalScrollBar()->value() + dx);
         verticalScrollBar()->setValue(verticalScrollBar()->value() + dy);
+    } else {
+        d->setCanCopy(d->pos != d->startPos);
     }
-
-    d->pos = pos;
-    d->prevPos = pos;
 
     viewport()->update();
 }
