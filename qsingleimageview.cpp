@@ -426,10 +426,10 @@ void QSingleImageView::flipHorizontally()
     Q_D(QSingleImageView);
 
     QTransform matrix;
-    matrix.rotate(180, Qt::XAxis);
+    matrix.rotate(180, Qt::YAxis);
     d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
 
-    d->addAxisAnimation(Qt::XAxis, 180.0, 200);
+    d->addAxisAnimation(Qt::YAxis, 180.0, 200);
 }
 
 void QSingleImageView::flipVertically()
@@ -437,10 +437,10 @@ void QSingleImageView::flipVertically()
     Q_D(QSingleImageView);
 
     QTransform matrix;
-    matrix.rotate(180, Qt::YAxis);
+    matrix.rotate(180, Qt::XAxis);
     d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
 
-    d->addAxisAnimation(Qt::YAxis, 180.0, 200);
+    d->addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
 
 void QSingleImageView::clearSelection()
