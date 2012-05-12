@@ -75,19 +75,6 @@ void ZoomAnimation::updateCurrentValue(const QVariant &value)
     d->setVisualZoomFactor(value.toReal());
 }
 
-QImageViewerRealAnimation::QImageViewerRealAnimation(Func f, QSingleImageViewPrivate *dd, QObject *parent) :
-    QVariantAnimation(parent),
-    d(dd),
-    func(f)
-{
-}
-
-void QImageViewerRealAnimation::updateCurrentValue(const QVariant &value)
-{
-    if (state() == Running)
-        (d->*func)(value.toReal());
-}
-
 AxisAnimation::AxisAnimation(Qt::Axis axis, QSingleImageViewPrivate *dd, QObject *parent):
     QVariantAnimation(parent),
     d(dd),

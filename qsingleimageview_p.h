@@ -19,23 +19,6 @@ private:
     QSingleImageViewPrivate *d;
 };
 
-class QImageViewerRealAnimation : public QVariantAnimation
-{
-    Q_OBJECT
-
-    typedef void (QSingleImageViewPrivate::*Func)(qreal);
-
-public:
-    explicit QImageViewerRealAnimation(Func f, QSingleImageViewPrivate *dd, QObject *parent = 0);
-
-protected:
-    void updateCurrentValue(const QVariant &value);
-
-private:
-    QSingleImageViewPrivate *d;
-    Func func;
-};
-
 class AxisAnimation : public QVariantAnimation
 {
     Q_OBJECT
