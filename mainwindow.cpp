@@ -84,6 +84,11 @@ void MainWindow::setupConnections()
 
     connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
 
+    connect(ui->actionRedo, SIGNAL(triggered()), m_view, SLOT(redo()));
+    connect(m_view, SIGNAL(canRedoChanged(bool)), ui->actionRedo, SLOT(setEnabled(bool)));
+    connect(ui->actionUndo, SIGNAL(triggered()), m_view, SLOT(undo()));
+    connect(m_view, SIGNAL(canUndoChanged(bool)), ui->actionUndo, SLOT(setEnabled(bool)));
+
     connect(ui->actionCopy, SIGNAL(triggered()), m_view, SLOT(copy()));
     connect(ui->actionCut, SIGNAL(triggered()), m_view, SLOT(cut()));
 

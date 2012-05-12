@@ -87,13 +87,103 @@ void AxisAnimation::updateCurrentValue(const QVariant &/*value*/)
     d->updateViewport();
 }
 
+ImageViewCommand::ImageViewCommand(QSingleImageViewPrivate *dd) :
+    QUndoCommand(),
+    d(dd)
+{
+}
+
+RotateCommand::RotateCommand(bool left, QSingleImageViewPrivate *dd) :
+    ImageViewCommand(dd),
+    m_left(left)
+{
+}
+
+void RotateCommand::redo()
+{
+    d->rotate(m_left);
+}
+
+void RotateCommand::undo()
+{
+    d->rotate(!m_left);
+}
+
+HFlipCommand::HFlipCommand(QSingleImageViewPrivate *dd) :
+    ImageViewCommand(dd)
+{
+}
+
+void HFlipCommand::redo()
+{
+    d->flipHorizontally();
+}
+
+void HFlipCommand::undo()
+{
+    d->flipHorizontally();
+}
+
+VFlipCommand::VFlipCommand(QSingleImageViewPrivate *dd) :
+    ImageViewCommand(dd)
+{
+}
+
+void VFlipCommand::redo()
+{
+    d->flipVertically();
+}
+
+void VFlipCommand::undo()
+{
+    d->flipVertically();
+}
+
+CutCommand::CutCommand(const QRect &rect, QSingleImageViewPrivate *dd):
+    ImageViewCommand(dd),
+    m_rect(rect)
+{
+}
+
+void CutCommand::redo()
+{
+    qDebug() << "redo" << m_rect;
+    m_image = d->image.copy(m_rect);
+
+    QColor color = QColor(255, 255, 255, d->image.hasAlphaChannel() ? 0 : 255);
+    for (int x = 0; x < m_rect.width(); x++) {
+        for (int y = 0; y < m_rect.height(); y++) {
+            d->image.setPixel(x + m_rect.x(), y + m_rect.y(), color.rgba());
+        }
+    }
+
+    d->syncPixmap();
+}
+
+void CutCommand::undo()
+{
+    for (int x = 0; x < m_rect.width(); x++) {
+        for (int y = 0; y < m_rect.height(); y++) {
+            QRgb color = m_image.pixel(x, y);
+            d->image.setPixel(m_rect.x() + x, m_rect.y() + y, color);
+        }
+    }
+
+    d->syncPixmap();
+}
+
 QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
     mousePressed(false),
+    undoStack(new QUndoStack(qq)),
     q_ptr(qq)
 {
+    Q_Q(QSingleImageView);
+
+    QObject::connect(undoStack, SIGNAL(canRedoChanged(bool)), q, SIGNAL(canRedoChanged(bool)));
+    QObject::connect(undoStack, SIGNAL(canUndoChanged(bool)), q, SIGNAL(canUndoChanged(bool)));
 }
 
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
@@ -229,6 +319,28 @@ QPointF QSingleImageViewPrivate::getCenter() const
     return QPointF(factor*pixmap.width()/2.0 - hvalue, factor*pixmap.height()/2.0 - vvalue);
 }
 
+QRect QSingleImageViewPrivate::selectedImageRect() const
+{
+    if (startPos == pos)
+        return QRect();
+
+    QPointF center = getCenter();
+
+    QRectF selectionRect(startPos, pos);
+    selectionRect = selectionRect.normalized();
+    selectionRect.translate(-center.x(), -center.y());
+
+    qreal factor = visualZoomFactor;
+    selectionRect = QRectF(selectionRect.topLeft()/factor, selectionRect.bottomRight()/factor);
+
+    QRect pixmapRect(QPoint(0, 0), pixmap.size());
+    pixmapRect.translate(-pixmapRect.center());
+
+    QRect result = QRectF(selectionRect.intersect(pixmapRect)).toAlignedRect();
+    result.translate(pixmap.width()/2, pixmap.height()/2);
+    return result;
+}
+
 void QSingleImageViewPrivate::drawBackground(QPainter *p)
 {
     QImageViewSettings *settings = QImageViewSettings::globalSettings();
@@ -328,6 +440,24 @@ void QSingleImageViewPrivate::rotate(bool left)
     addAxisAnimation(Qt::ZAxis, left ? - 90.0 : 90.0, 150);
 }
 
+void QSingleImageViewPrivate::flipHorizontally()
+{
+    QTransform matrix;
+    matrix.rotate(180, Qt::YAxis);
+    image = image.transformed(matrix, Qt::SmoothTransformation);
+
+    addAxisAnimation(Qt::YAxis, 180.0, 200);
+}
+
+void QSingleImageViewPrivate::flipVertically()
+{
+    QTransform matrix;
+    matrix.rotate(180, Qt::XAxis);
+    image = image.transformed(matrix, Qt::SmoothTransformation);
+
+    addAxisAnimation(Qt::XAxis, 180.0, 200);
+}
+
 QSingleImageView::QSingleImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QSingleImageViewPrivate(this))
@@ -345,6 +475,20 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
 QSingleImageView::~QSingleImageView()
 {
     delete d_ptr;
+}
+
+bool QSingleImageView::canRedo() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->undoStack->canRedo();
+}
+
+bool QSingleImageView::canUndo() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->undoStack->canUndo();
 }
 
 QImage QSingleImageView::image() const
@@ -402,24 +546,7 @@ QRect QSingleImageView::selectedImageRect() const
 {
     Q_D(const QSingleImageView);
 
-    if (d->startPos == d->pos)
-        return QRect();
-
-    QPointF center = d->getCenter();
-
-    QRectF selectionRect(d->startPos, d->pos);
-    selectionRect = selectionRect.normalized();
-    selectionRect.translate(-center.x(), -center.y());
-
-    qreal factor = d->visualZoomFactor;
-    selectionRect = QRectF(selectionRect.topLeft()/factor, selectionRect.bottomRight()/factor);
-
-    QRect pixmapRect(QPoint(0, 0), d->pixmap.size());
-    pixmapRect.translate(-pixmapRect.center());
-
-    QRect result = QRectF(selectionRect.intersect(pixmapRect)).toAlignedRect();
-    result.translate(d->pixmap.width()/2, d->pixmap.height()/2);
-    return result;
+    return d->selectedImageRect();
 }
 
 QImage QSingleImageView::selectedImage() const
@@ -483,36 +610,28 @@ void QSingleImageView::rotateLeft()
 {
     Q_D(QSingleImageView);
 
-    d->rotate(true);
+    d->undoStack->push(new RotateCommand(true, d));
 }
 
 void QSingleImageView::rotateRight()
 {
     Q_D(QSingleImageView);
 
-    d->rotate(false);
+    d->undoStack->push(new RotateCommand(false, d));
 }
 
 void QSingleImageView::flipHorizontally()
 {
     Q_D(QSingleImageView);
 
-    QTransform matrix;
-    matrix.rotate(180, Qt::YAxis);
-    d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
-
-    d->addAxisAnimation(Qt::YAxis, 180.0, 200);
+    d->undoStack->push(new HFlipCommand(d));
 }
 
 void QSingleImageView::flipVertically()
 {
     Q_D(QSingleImageView);
 
-    QTransform matrix;
-    matrix.rotate(180, Qt::XAxis);
-    d->image = d->image.transformed(matrix, Qt::SmoothTransformation);
-
-    d->addAxisAnimation(Qt::XAxis, 180.0, 200);
+    d->undoStack->push(new VFlipCommand(d));
 }
 
 void QSingleImageView::clearSelection()
@@ -538,15 +657,21 @@ void QSingleImageView::cut()
 
     copy();
 
-    QRect rect = selectedImageRect();
-    QColor color = QColor(255, 255, 255, d->image.hasAlphaChannel() ? 0 : 255);
-    for (int i = 0; i < rect.width(); i++) {
-        for (int j = 0; j < rect.height(); j++) {
-            d->image.setPixel(i + rect.x(), j + rect.y(), color.rgba());
-        }
-    }
+    d->undoStack->push(new CutCommand(selectedImageRect(), d));
+}
 
-    d->syncPixmap();
+void QSingleImageView::redo()
+{
+    Q_D(QSingleImageView);
+
+    d->undoStack->redo();
+}
+
+void QSingleImageView::undo()
+{
+    Q_D(QSingleImageView);
+
+    d->undoStack->undo();
 }
 
 void QSingleImageView::mousePressEvent(QMouseEvent *e)
