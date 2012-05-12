@@ -293,8 +293,6 @@ void QSingleImageView::setImage(const QImage &image)
     d->stopAnimations();
     d->syncPixmap();
 
-//    d->pixmap = QPixmap::fromImage(d->image);
-
     if (d->image.isNull()) {
         d->zoomFactor = 1.0;
         d->visualZoomFactor = 1.0;
@@ -501,8 +499,6 @@ void QSingleImageView::mouseReleaseEvent(QMouseEvent *)
 {
     Q_D(QSingleImageView);
 
-//    d->startPos = QPoint();
-//    d->pos = QPoint();
     d->prevPos = QPoint();
 
     if (d->mouseMode == MouseModeMove)
