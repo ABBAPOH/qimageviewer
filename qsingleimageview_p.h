@@ -78,7 +78,8 @@ public:
     void syncPixmap();
 
     QPointF getCenter() const;
-    void drawSelection(QPainter *p, const QRect &rect, const QRect &imageRect);
+    void drawBackground(QPainter *p);
+    void drawSelection(QPainter *p);
 
 public:
     QImage image;

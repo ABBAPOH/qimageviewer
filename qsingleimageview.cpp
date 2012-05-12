@@ -11,10 +11,57 @@
 
 #include "qimageviewsettings.h"
 
-QPoint adjustPoint(QPoint p, qreal factor)
+static QPoint adjustPoint(QPoint p, qreal factor)
 {
 //    QPointF pf = p;
     return QPoint((int)(p.x()/factor)*factor, (int)(p.y()/factor)*factor);
+}
+
+static QPixmap chessBoardBackground()
+{
+    //cbsSize is the size of each square side
+    static const int cbsSize = 16;
+
+    QPixmap m = QPixmap(cbsSize*2,cbsSize*2);
+    QPainter p(&m);
+    p.fillRect(m.rect(), QColor(128,128,128));
+    QColor light = QColor(192,192,192);
+    p.fillRect(0,0,cbsSize,cbsSize,light);
+    p.fillRect(cbsSize,cbsSize,cbsSize,cbsSize, light);
+    p.end();
+    return m;
+}
+
+static QPixmap chessBoardBackground(const QSize &size)
+{
+    if (size.isEmpty())
+        return QPixmap();
+
+    static QSize previousSize;
+    static QPixmap cachedPismap;
+
+    if (size == previousSize) {
+        return cachedPismap;
+    }
+
+    int w = size.width(), h = size.height();
+
+    QPixmap m(w, h);
+    QPainter p(&m);
+    p.translate(w/2.0, h/2.0);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.rotate(90);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.rotate(90);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.rotate(90);
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.end();
+
+    previousSize = size;
+    cachedPismap = m;
+
+    return m;
 }
 
 ZoomAnimation::ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
@@ -195,6 +242,29 @@ QPointF QSingleImageViewPrivate::getCenter() const
     return QPointF(factor*pixmap.width()/2.0 - hvalue, factor*pixmap.height()/2.0 - vvalue);
 }
 
+void QSingleImageViewPrivate::drawBackground(QPainter *p)
+{
+    QImageViewSettings *settings = QImageViewSettings::globalSettings();
+
+    QImageViewSettings::ImageBackgroundType type = settings->imageBackgroundType();
+    QColor imageBackgroundColor = settings->imageBackgroundColor();
+
+    QSize size = pixmap.size()*visualZoomFactor;
+    QRectF rect(QPointF(0, 0), size);
+    rect.translate(-rect.center());
+
+    switch (type) {
+    case QImageViewSettings::None :
+        break;
+    case QImageViewSettings::Chess :
+        p->drawPixmap(rect, chessBoardBackground(size), QRectF(QPointF(0, 0), size));
+        break;
+    case QImageViewSettings::SolidColor :
+        p->fillRect(rect, imageBackgroundColor);
+        break;
+    }
+}
+
 static QPoint containingPoint(QPoint pos, const QRect &rect)
 {
     pos.setX(qMax(pos.x(), rect.left()));
@@ -204,12 +274,25 @@ static QPoint containingPoint(QPoint pos, const QRect &rect)
     return pos;
 }
 
-void QSingleImageViewPrivate::drawSelection(QPainter *p, const QRect &rect, const QRect &imageRect)
+void QSingleImageViewPrivate::drawSelection(QPainter *p)
 {
+    Q_Q(QSingleImageView);
+
     if (mouseMode != QSingleImageView::MouseModeSelect)
         return;
 
+    if (startPos == pos)
+        return;
+
     QPointF center = getCenter();
+
+    QRect rect = q->viewport()->rect();
+    rect.translate(-center.x(), -center.y());
+
+    qreal factor = visualZoomFactor;
+    QSize backgroundSize = pixmap.size()*factor;
+    QRect imageRect(QPoint(0, 0), backgroundSize);
+    imageRect.translate(-imageRect.center());
 
     // rect in painter's coordinates
     QRect selectionRect(::adjustPoint(startPos, zoomFactor), ::adjustPoint(pos, zoomFactor));
@@ -546,71 +629,21 @@ void QSingleImageView::keyPressEvent(QKeyEvent *e)
     QAbstractScrollArea::keyPressEvent(e);
 }
 
-static QPixmap chessBoardBackground()
-{
-    //cbsSize is the size of each square side
-    static const int cbsSize = 16;
-
-    QPixmap m = QPixmap(cbsSize*2,cbsSize*2);
-    QPainter p(&m);
-    p.fillRect(m.rect(), QColor(128,128,128));
-    QColor light = QColor(192,192,192);
-    p.fillRect(0,0,cbsSize,cbsSize,light);
-    p.fillRect(cbsSize,cbsSize,cbsSize,cbsSize, light);
-    p.end();
-    return m;
-}
-
-static QPixmap chessBoardBackground(const QSize &size)
-{
-    if (size.isEmpty())
-        return QPixmap();
-
-    static QSize previousSize;
-    static QPixmap cachedPismap;
-
-    if (size == previousSize) {
-        return cachedPismap;
-    }
-
-    int w = size.width(), h = size.height();
-
-    QPixmap m(w, h);
-    QPainter p(&m);
-    p.translate(w/2.0, h/2.0);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
-    p.rotate(90);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
-    p.rotate(90);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
-    p.rotate(90);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
-    p.end();
-
-    previousSize = size;
-    cachedPismap = m;
-
-    return m;
-}
-
 void QSingleImageView::paintEvent(QPaintEvent *)
 {
     Q_D(QSingleImageView);
 
-    QImageViewSettings *settings = QImageViewSettings::globalSettings();
-
-    QImageViewSettings::ImageBackgroundType type = settings->imageBackgroundType();
-    QColor imageBackgroundColor = settings->imageBackgroundColor();
-    QColor backgroundColor = settings->backgroundColor();
-
     QPainter p(viewport());
     QRect rect = viewport()->rect();
 
+    // Draw viewport background
+    QColor backgroundColor = QImageViewSettings::globalSettings()->backgroundColor();
     p.fillRect(rect, backgroundColor);
 
     if (d->image.isNull())
         return;
 
+    // Move and rotate painter
     QPointF center = d->getCenter();
 
     QTransform matrix;
@@ -623,24 +656,12 @@ void QSingleImageView::paintEvent(QPaintEvent *)
 
     p.setTransform(matrix);
 
-    qreal factor = d->visualZoomFactor;
-    QSize backgroundSize = d->pixmap.size()*factor;
-    QRectF backgroundRect(QPoint(0, 0), backgroundSize);
-    backgroundRect.translate(-backgroundRect.center());
+    // Draw image background
+    d->drawBackground(&p);
 
-    switch (type) {
-    case QImageViewSettings::None :
-        break;
-    case QImageViewSettings::Chess :
-        p.drawPixmap(backgroundRect, chessBoardBackground(backgroundSize), QRectF(QPointF(0, 0), backgroundSize));
-        break;
-    case QImageViewSettings::SolidColor :
-        p.fillRect(backgroundRect, imageBackgroundColor);
-        break;
-    }
-
+    // Draw scaled pixmap
     p.save();
-    p.scale(factor, factor);
+    p.scale(d->visualZoomFactor, d->visualZoomFactor);
 
     QRectF pixmapRect(QPointF(0, 0), d->pixmap.size());
     pixmapRect.translate(-pixmapRect.center());
@@ -648,12 +669,8 @@ void QSingleImageView::paintEvent(QPaintEvent *)
 
     p.restore();
 
-    rect.translate(-center.x(), -center.y());
-
-    if (d->startPos == d->pos)
-        return;
-
-    d->drawSelection(&p, rect, backgroundRect.toAlignedRect());
+    // Draw vieport's and pixmap's selections
+    d->drawSelection(&p);
 }
 
 bool QSingleImageView::viewportEvent(QEvent *e)
