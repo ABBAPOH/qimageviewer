@@ -7,13 +7,10 @@
 #include <QtGui/QResizeEvent>
 #include <QtGui/QScrollBar>
 
-#include <QDebug>
-
 #include "qimageviewsettings.h"
 
 static QPoint adjustPoint(QPoint p, qreal factor)
 {
-//    QPointF pf = p;
     return QPoint((int)(p.x()/factor)*factor, (int)(p.y()/factor)*factor);
 }
 
@@ -207,7 +204,6 @@ void QSingleImageViewPrivate::setZoomFactor(qreal factor)
     q->clearSelection();
 
     zoomFactor = factor;
-//    visualZoomFactor = factor;
 
     if (zoomAnimation.state() == QVariantAnimation::Running)
         zoomAnimation.stop();
@@ -495,8 +491,6 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QSingleImageViewPrivate(this))
 {
-//    setImage(QImage("/Users/arch/Pictures/anti112 .jpg"));
-//    setImage(QImage("/Users/arch/Pictures/archon.jpg"));
     setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
 
     horizontalScrollBar()->setSingleStep(10);
