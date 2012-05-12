@@ -14,6 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_view = new QSingleImageView(this);
     setCentralWidget(m_view);
 
+    m_toolGroup = new QActionGroup(this);
+    m_toolGroup->setExclusive(true);
+    m_toolGroup->addAction(ui->actionMoveTool);
+    m_toolGroup->addAction(ui->actionSelectionTool);
+
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
     connect(ui->actionSaveAs, SIGNAL(triggered()), this, SLOT(saveAs()));
@@ -22,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->actionCopy, SIGNAL(triggered()), m_view, SLOT(copy()));
     connect(ui->actionCut, SIGNAL(triggered()), m_view, SLOT(cut()));
+
+    connect(ui->actionMoveTool, SIGNAL(triggered(bool)), this, SLOT(onMoveToolTriggered(bool)));
+    connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));
 
     connect(ui->actionZoomIn, SIGNAL(triggered()), m_view, SLOT(zoomIn()));
     connect(ui->actionZoomOut, SIGNAL(triggered()), m_view, SLOT(zoomOut()));
@@ -78,4 +86,16 @@ void MainWindow::saveAs()
 
     m_file = file;
     save();
+}
+
+void MainWindow::onMoveToolTriggered(bool triggered)
+{
+    if (triggered)
+        m_view->setMouseMode(QSingleImageView::MouseModeMove);
+}
+
+void MainWindow::onSelectionToolTriggered(bool triggered)
+{
+    if (triggered)
+        m_view->setMouseMode(QSingleImageView::MouseModeSelect);
 }

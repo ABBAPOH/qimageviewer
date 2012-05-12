@@ -7,6 +7,7 @@ namespace Ui {
 class MainWindow;
 }
 
+class QActionGroup;
 class QSingleImageView;
 
 class MainWindow : public QMainWindow
@@ -24,10 +25,14 @@ private slots:
     void save();
     void saveAs();
 
+    void onMoveToolTriggered(bool);
+    void onSelectionToolTriggered(bool);
+
 private:
     Ui::MainWindow *ui;
     QSingleImageView *m_view;
     QString m_file;
+    QActionGroup *m_toolGroup;
 };
 
 #endif // MAINWINDOW_H

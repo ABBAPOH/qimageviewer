@@ -42,6 +42,9 @@
     </property>
     <addaction name="actionCut"/>
     <addaction name="actionCopy"/>
+    <addaction name="separator"/>
+    <addaction name="actionMoveTool"/>
+    <addaction name="actionSelectionTool"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -229,6 +232,31 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionMoveTool">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Move tool</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="actionSelectionTool">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Selection tool</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
    </property>
   </action>
  </widget>
