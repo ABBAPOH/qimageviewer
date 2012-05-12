@@ -610,8 +610,6 @@ void QSingleImageView::paintEvent(QPaintEvent *)
         return;
 
     QPointF center = d->getCenter();
-    p.setPen(Qt::red);
-    p.drawEllipse(center, 500, 500);
 
     QTransform matrix;
     matrix.translate(center.x(), center.y());
