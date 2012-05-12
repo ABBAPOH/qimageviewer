@@ -164,6 +164,24 @@ void QSingleImageViewPrivate::syncPixmap()
     updateViewport();
 }
 
+QPointF QSingleImageViewPrivate::getCenter() const
+{
+    Q_Q(const QSingleImageView);
+
+    qreal factor = visualZoomFactor;
+
+    int hvalue = q->horizontalScrollBar()->value();
+    int vvalue = q->verticalScrollBar()->value();
+
+    if (q->horizontalScrollBar()->maximum() == 0)
+        hvalue = -(q->viewport()->width() - factor*pixmap.width())/2;
+
+    if (q->verticalScrollBar()->maximum() == 0)
+        vvalue = -(q->viewport()->height() - factor*pixmap.height())/2;
+
+    return QPointF(factor*pixmap.width()/2.0 - hvalue, factor*pixmap.height()/2.0 - vvalue);
+}
+
 void QSingleImageViewPrivate::rotate(bool left)
 {
     Q_Q(QSingleImageView);
@@ -408,18 +426,7 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     if (d->image.isNull())
         return;
 
-    qreal factor = d->visualZoomFactor;
-
-    int hvalue = horizontalScrollBar()->value();
-    int vvalue = verticalScrollBar()->value();
-
-    if (horizontalScrollBar()->maximum() == 0)
-        hvalue = -(viewport()->width() - factor*d->pixmap.width())/2;
-
-    if (verticalScrollBar()->maximum() == 0)
-        vvalue = -(viewport()->height() - factor*d->pixmap.height())/2;
-
-    QPointF center = QPoint(factor*d->pixmap.width()/2.0 - hvalue, factor*d->pixmap.height()/2.0 - vvalue);
+    QPointF center = d->getCenter();
 
     QTransform matrix;
     matrix.translate(center.x(), center.y());
@@ -432,6 +439,7 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     p.setTransform(matrix);
     rect.translate(-rect.center());
 
+    qreal factor = d->visualZoomFactor;
     QSize backgroundSize = d->pixmap.size()*factor;
     QRectF backgroundRect(QPoint(0, 0), backgroundSize);
     backgroundRect.translate(-backgroundRect.center());

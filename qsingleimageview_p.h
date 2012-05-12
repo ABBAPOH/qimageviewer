@@ -77,6 +77,8 @@ public:
     void stopAnimations();
     void syncPixmap();
 
+    QPointF getCenter() const;
+
 public:
     QImage image;
     QPixmap originalPixmap;
