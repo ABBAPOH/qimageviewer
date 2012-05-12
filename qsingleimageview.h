@@ -48,6 +48,7 @@ public slots:
     void clearSelection();
 
     void copy();
+    void cut();
 
 protected:
     void mousePressEvent(QMouseEvent *);

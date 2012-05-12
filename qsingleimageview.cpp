@@ -460,6 +460,23 @@ void QSingleImageView::copy()
     clipboard->setImage(image);
 }
 
+void QSingleImageView::cut()
+{
+    Q_D(QSingleImageView);
+
+    copy();
+
+    QRect rect = selectedImageRect();
+    QColor color = QColor(255, 255, 255, d->image.hasAlphaChannel() ? 0 : 255);
+    for (int i = 0; i < rect.width(); i++) {
+        for (int j = 0; j < rect.height(); j++) {
+            d->image.setPixel(i + rect.x(), j + rect.y(), color.rgba());
+        }
+    }
+
+    d->syncPixmap();
+}
+
 void QSingleImageView::mousePressEvent(QMouseEvent *e)
 {
     Q_D(QSingleImageView);
@@ -517,6 +534,9 @@ void QSingleImageView::keyPressEvent(QKeyEvent *e)
     case Qt::Key_C :
         if (e->modifiers() & Qt::ControlModifier)
             copy();
+    case Qt::Key_X :
+        if (e->modifiers() & Qt::ControlModifier)
+            cut();
     default:
         break;
     }
