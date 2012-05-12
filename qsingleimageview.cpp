@@ -61,6 +61,15 @@ static QPixmap chessBoardBackground(const QSize &size)
     return m;
 }
 
+static QPoint containingPoint(QPoint pos, const QRect &rect)
+{
+    pos.setX(qMax(pos.x(), rect.left()));
+    pos.setY(qMax(pos.y(), rect.top()));
+    pos.setX(qMin(pos.x(), rect.right()));
+    pos.setY(qMin(pos.y(), rect.bottom()));
+    return pos;
+}
+
 ZoomAnimation::ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
     QVariantAnimation(parent),
     d(dd)
@@ -144,7 +153,6 @@ CutCommand::CutCommand(const QRect &rect, QSingleImageViewPrivate *dd):
 
 void CutCommand::redo()
 {
-    qDebug() << "redo" << m_rect;
     m_image = d->image.copy(m_rect);
 
     QColor color = QColor(255, 255, 255, d->image.hasAlphaChannel() ? 0 : 255);
@@ -219,9 +227,57 @@ void QSingleImageViewPrivate::setVisualZoomFactor(qreal factor)
 {
     visualZoomFactor = factor;
 
-    Q_Q(QSingleImageView);
-    q->viewport()->update();
     updateScrollBars();
+}
+
+void QSingleImageViewPrivate::setCanCopy(bool can)
+{
+    Q_Q(QSingleImageView);
+
+    if (canCopy != can) {
+        canCopy = can;
+        emit q->canCopyChanged(canCopy);
+    }
+}
+
+void QSingleImageViewPrivate::setModified(bool m)
+{
+    Q_Q(QSingleImageView);
+
+    if (modified != m) {
+        modified = m;
+        emit q->modifiedChanged(modified);
+    }
+}
+
+void QSingleImageViewPrivate::rotate(bool left)
+{
+    Q_Q(QSingleImageView);
+
+    QTransform matrix;
+    matrix.rotate(left ? -90 : 90, Qt::ZAxis);
+    image = this->image.transformed(matrix, Qt::SmoothTransformation);
+    q->viewport()->update();
+
+    addAxisAnimation(Qt::ZAxis, left ? - 90.0 : 90.0, 150);
+}
+
+void QSingleImageViewPrivate::flipHorizontally()
+{
+    QTransform matrix;
+    matrix.rotate(180, Qt::YAxis);
+    image = image.transformed(matrix, Qt::SmoothTransformation);
+
+    addAxisAnimation(Qt::YAxis, 180.0, 200);
+}
+
+void QSingleImageViewPrivate::flipVertically()
+{
+    QTransform matrix;
+    matrix.rotate(180, Qt::XAxis);
+    image = image.transformed(matrix, Qt::SmoothTransformation);
+
+    addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
 
 void QSingleImageViewPrivate::updateScrollBars()
@@ -249,6 +305,12 @@ void QSingleImageViewPrivate::updateScrollBars()
     q->viewport()->update();
 }
 
+void QSingleImageViewPrivate::updateViewport()
+{
+    Q_Q(QSingleImageView);
+    q->viewport()->update();
+}
+
 void QSingleImageViewPrivate::animationFinished()
 {
     if (!hasRunningAnimations())
@@ -263,11 +325,6 @@ void QSingleImageViewPrivate::undoIndexChanged(int index)
         setModified(true);
 }
 
-void QSingleImageViewPrivate::updateViewport()
-{
-    Q_Q(QSingleImageView);
-    q->viewport()->update();
-}
 
 void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs)
 {
@@ -283,7 +340,7 @@ void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, in
     QObject::connect(animation, SIGNAL(finished()), q, SLOT(animationFinished()));
 }
 
-bool QSingleImageViewPrivate::hasRunningAnimations()
+bool QSingleImageViewPrivate::hasRunningAnimations() const
 {
     foreach (AxisAnimation *animation, runningAnimations) {
         if (animation->state() == QVariantAnimation::Running)
@@ -373,15 +430,6 @@ void QSingleImageViewPrivate::drawBackground(QPainter *p)
     }
 }
 
-static QPoint containingPoint(QPoint pos, const QRect &rect)
-{
-    pos.setX(qMax(pos.x(), rect.left()));
-    pos.setY(qMax(pos.y(), rect.top()));
-    pos.setX(qMin(pos.x(), rect.right()));
-    pos.setY(qMin(pos.y(), rect.bottom()));
-    return pos;
-}
-
 void QSingleImageViewPrivate::drawSelection(QPainter *p)
 {
     Q_Q(QSingleImageView);
@@ -435,56 +483,6 @@ void QSingleImageViewPrivate::drawSelection(QPainter *p)
 
     p->setPen(Qt::black);
     p->drawText(textPos, text);
-}
-
-void QSingleImageViewPrivate::rotate(bool left)
-{
-    Q_Q(QSingleImageView);
-
-    QTransform matrix;
-    matrix.rotate(left ? -90 : 90, Qt::ZAxis);
-    image = this->image.transformed(matrix, Qt::SmoothTransformation);
-    q->viewport()->update();
-
-    addAxisAnimation(Qt::ZAxis, left ? - 90.0 : 90.0, 150);
-}
-
-void QSingleImageViewPrivate::flipHorizontally()
-{
-    QTransform matrix;
-    matrix.rotate(180, Qt::YAxis);
-    image = image.transformed(matrix, Qt::SmoothTransformation);
-
-    addAxisAnimation(Qt::YAxis, 180.0, 200);
-}
-
-void QSingleImageViewPrivate::flipVertically()
-{
-    QTransform matrix;
-    matrix.rotate(180, Qt::XAxis);
-    image = image.transformed(matrix, Qt::SmoothTransformation);
-
-    addAxisAnimation(Qt::XAxis, 180.0, 200);
-}
-
-void QSingleImageViewPrivate::setCanCopy(bool can)
-{
-    Q_Q(QSingleImageView);
-
-    if (canCopy != can) {
-        canCopy = can;
-        emit q->canCopyChanged(canCopy);
-    }
-}
-
-void QSingleImageViewPrivate::setModified(bool m)
-{
-    Q_Q(QSingleImageView);
-
-    if (modified != m) {
-        modified = m;
-        emit q->modifiedChanged(modified);
-    }
 }
 
 QSingleImageView::QSingleImageView(QWidget *parent) :

@@ -10,7 +10,6 @@
 class ZoomAnimation : public QVariantAnimation
 {
     Q_OBJECT
-
 public:
     explicit ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent = 0);
 
@@ -102,20 +101,20 @@ public:
     void setZoomFactor(qreal factor);
     void setVisualZoomFactor(qreal factor);
 
-    void rotate(bool left);
-    void flipHorizontally();
-    void flipVertically();
     void setCanCopy(bool can);
     void setModified(bool m);
 
+    void rotate(bool left);
+    void flipHorizontally();
+    void flipVertically();
+
     void updateScrollBars();
+    void updateViewport();
     void animationFinished();
     void undoIndexChanged(int);
 
-    void updateViewport();
-
     void addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs);
-    bool hasRunningAnimations();
+    bool hasRunningAnimations() const;
     void stopAnimations();
     void syncPixmap();
 
