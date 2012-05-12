@@ -18,8 +18,11 @@ public:
     ~MainWindow();
 
 private slots:
+    void about();
+
     void open();
     void save();
+    void saveAs();
 
 private:
     Ui::MainWindow *ui;
