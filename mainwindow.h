@@ -29,6 +29,9 @@ private slots:
     void onSelectionToolTriggered(bool);
 
 private:
+    void setupConnections();
+
+private:
     Ui::MainWindow *ui;
     QSingleImageView *m_view;
     QString m_file;
