@@ -269,7 +269,7 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     horizontalScrollBar()->setSingleStep(10);
     verticalScrollBar()->setSingleStep(10);
 
-    setMouseMode(MouseModeSelect);
+    setMouseMode(MouseModeMove);
 }
 
 QSingleImageView::~QSingleImageView()
@@ -320,6 +320,8 @@ void QSingleImageView::setMouseMode(QSingleImageView::MouseMode mode)
             viewport()->setCursor(Qt::OpenHandCursor);
         else
             viewport()->setCursor(Qt::ArrowCursor);
+
+        clearSelection();
 
         d->mouseMode = mode;
         emit mouseModeChanged(mode);
