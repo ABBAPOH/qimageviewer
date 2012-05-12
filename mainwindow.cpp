@@ -52,6 +52,7 @@ void MainWindow::open()
 void MainWindow::save()
 {
     m_view->image().save(m_file);
+    m_view->setModified(false);
 }
 
 void MainWindow::saveAs()
@@ -80,6 +81,7 @@ void MainWindow::setupConnections()
 {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
+    connect(m_view, SIGNAL(modifiedChanged(bool)), ui->actionSave, SLOT(setEnabled(bool)));
     connect(ui->actionSaveAs, SIGNAL(triggered()), this, SLOT(saveAs()));
 
     connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));

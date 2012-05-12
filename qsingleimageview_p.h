@@ -105,10 +105,11 @@ public:
     void rotate(bool left);
     void flipHorizontally();
     void flipVertically();
+    void setModified(bool m);
 
     void updateScrollBars();
-
     void animationFinished();
+    void undoIndexChanged(int);
 
     void updateViewport();
 
@@ -142,6 +143,8 @@ public:
     QPoint prevPos;
 
     QUndoStack *undoStack;
+    int undoStackIndex;
+    bool modified;
 
 private:
     QSingleImageView *q_ptr;

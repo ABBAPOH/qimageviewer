@@ -178,12 +178,16 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     zoomAnimation(this),
     mousePressed(false),
     undoStack(new QUndoStack(qq)),
+    undoStackIndex(0),
+    modified(0),
     q_ptr(qq)
 {
     Q_Q(QSingleImageView);
 
     QObject::connect(undoStack, SIGNAL(canRedoChanged(bool)), q, SIGNAL(canRedoChanged(bool)));
     QObject::connect(undoStack, SIGNAL(canUndoChanged(bool)), q, SIGNAL(canUndoChanged(bool)));
+
+    QObject::connect(undoStack, SIGNAL(indexChanged(int)), q, SLOT(undoIndexChanged(int)));
 }
 
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
@@ -252,6 +256,14 @@ void QSingleImageViewPrivate::animationFinished()
 {
     if (!hasRunningAnimations())
         syncPixmap();
+}
+
+void QSingleImageViewPrivate::undoIndexChanged(int index)
+{
+    if (index == undoStackIndex)
+        setModified(false);
+    else
+        setModified(true);
 }
 
 void QSingleImageViewPrivate::updateViewport()
@@ -458,6 +470,16 @@ void QSingleImageViewPrivate::flipVertically()
     addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
 
+void QSingleImageViewPrivate::setModified(bool m)
+{
+    Q_Q(QSingleImageView);
+
+    if (modified != m) {
+        modified = m;
+        emit q->modifiedChanged(modified);
+    }
+}
+
 QSingleImageView::QSingleImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QSingleImageViewPrivate(this))
@@ -516,6 +538,25 @@ void QSingleImageView::setImage(const QImage &image)
 
     bestFit();
     viewport()->update();
+}
+
+bool QSingleImageView::isModified() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->undoStackIndex == d->undoStack->index();
+}
+
+void QSingleImageView::setModified(bool modified)
+{
+    Q_D(QSingleImageView);
+
+    if (modified)
+        d->undoStackIndex = 0;
+    else
+        d->undoStackIndex = d->undoStack->index();
+
+    d->setModified(modified);
 }
 
 QSingleImageView::MouseMode QSingleImageView::mouseMode() const

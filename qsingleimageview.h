@@ -12,6 +12,7 @@ class QSingleImageView : public QAbstractScrollArea
     Q_PROPERTY(MouseMode mouseMode READ mouseMode WRITE setMouseMode NOTIFY mouseModeChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged)
+    Q_PROPERTY(bool modified READ isModified WRITE setModified NOTIFY modifiedChanged)
 
 public:
     enum MouseMode {
@@ -29,6 +30,9 @@ public:
     QImage image() const;
     void setImage(const QImage &image);
 
+    bool isModified() const;
+    void setModified(bool modified);
+
     MouseMode mouseMode() const;
     void setMouseMode(MouseMode mode);
 
@@ -39,6 +43,7 @@ signals:
     void mouseModeChanged(MouseMode mode);
     void canRedoChanged(bool canRedo);
     void canUndoChanged(bool canUndo);
+    void modifiedChanged(bool modified);
 
 public slots:
     void zoomIn();
@@ -75,6 +80,7 @@ protected:
 
     Q_PRIVATE_SLOT(d_func(), void updateScrollBars())
     Q_PRIVATE_SLOT(d_func(), void animationFinished())
+    Q_PRIVATE_SLOT(d_func(), void undoIndexChanged(int))
 };
 
 #endif // QSINGLEIMAGEVIEW_H
