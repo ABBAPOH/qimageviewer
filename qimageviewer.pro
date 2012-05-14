@@ -15,14 +15,17 @@ TEMPLATE = app
 SOURCES += main.cpp\
     qsingleimageview.cpp \
     mainwindow.cpp \
-    qimageviewsettings.cpp
+    qimageviewsettings.cpp \
+    qcolorbutton.cpp
 
 HEADERS  += \
     qsingleimageview.h \
     qsingleimageview_p.h \
     mainwindow.h \
     qimageviewsettings.h \
-    qimageviewsettings_p.h
+    qimageviewsettings_p.h \
+    qcolorbutton.h \
+    qcolorbutton_p.h
 
 FORMS += \
     mainwindow.ui
