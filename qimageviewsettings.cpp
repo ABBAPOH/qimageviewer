@@ -5,14 +5,31 @@
 
 #include "qsingleimageview.h"
 
+void QImageViewSettingsPrivate::addView(QSingleImageView *view)
+{
+    Q_ASSERT(!views.contains(view));
+    views.append(view);
+}
+
+void QImageViewSettingsPrivate::removeView(QSingleImageView *view)
+{
+    Q_ASSERT(views.contains(view));
+    views.removeOne(view);
+}
+
+void QImageViewSettingsPrivate::updateViews()
+{
+    foreach (QSingleImageView *view, views) {
+        view->viewport()->update();
+    }
+}
+
 QImageViewSettings::QImageViewSettings() :
     d_ptr(new QImageViewSettingsPrivate)
 {
     Q_D(QImageViewSettings);
 
-//    d->imageBackgroundType = None;
     d->imageBackgroundType = Chess;
-//    d->imageBackgroundType = SolidColor;
     d->imageBackgroundColor = qApp->palette().color(QPalette::Base);
     d->backgroundColor = qApp->palette().color(QPalette::Window).darker(150);
 }
@@ -38,7 +55,12 @@ QColor QImageViewSettings::imageBackgroundColor() const
 
 void QImageViewSettings::setImageBackgroundColor(const QColor &color)
 {
-    // TODO: implement
+    Q_D(QImageViewSettings);
+
+    if (d->imageBackgroundColor != color) {
+        d->imageBackgroundColor = color;
+        d->updateViews();
+    }
 }
 
 QImageViewSettings::ImageBackgroundType QImageViewSettings::imageBackgroundType() const
@@ -50,7 +72,12 @@ QImageViewSettings::ImageBackgroundType QImageViewSettings::imageBackgroundType(
 
 void QImageViewSettings::setiImageBackgroundType(QImageViewSettings::ImageBackgroundType type)
 {
-    // TODO: implement
+    Q_D(QImageViewSettings);
+
+    if (d->imageBackgroundType != type) {
+        d->imageBackgroundType = type;
+        d->updateViews();
+    }
 }
 
 QColor QImageViewSettings::backgroundColor() const
@@ -62,5 +89,10 @@ QColor QImageViewSettings::backgroundColor() const
 
 void QImageViewSettings::setBackgroundColor(const QColor &color)
 {
-    // TODO: implement
+    Q_D(QImageViewSettings);
+
+    if (d->backgroundColor != color) {
+        d->backgroundColor = color;
+        d->updateViews();
+    }
 }

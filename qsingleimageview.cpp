@@ -8,6 +8,7 @@
 #include <QtGui/QScrollBar>
 
 #include "qimageviewsettings.h"
+#include "qimageviewsettings_p.h"
 
 static QPoint adjustPoint(QPoint p, qreal factor)
 {
@@ -495,10 +496,13 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     verticalScrollBar()->setSingleStep(10);
 
     setMouseMode(MouseModeMove);
+
+    QImageViewSettings::globalSettings()->d_func()->addView(this);
 }
 
 QSingleImageView::~QSingleImageView()
 {
+    QImageViewSettings::globalSettings()->d_func()->removeView(this);
     delete d_ptr;
 }
 
