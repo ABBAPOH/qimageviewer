@@ -1,10 +1,15 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "qsingleimageview.h"
+#include <QPointer>
+#include <QSettings>
 
 #include <QFileDialog>
 #include <QMessageBox>
+
+#include "qsingleimageview.h"
+#include "qimageviewsettings.h"
+#include "preferenceswidget.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -22,10 +27,12 @@ MainWindow::MainWindow(QWidget *parent) :
     setupConnections();
 
     resize(800, 600);
+    loadSettings();
 }
 
 MainWindow::~MainWindow()
 {
+    saveSettings();
     delete ui;
 }
 
@@ -77,6 +84,21 @@ void MainWindow::onSelectionToolTriggered(bool triggered)
         m_view->setMouseMode(QSingleImageView::MouseModeSelect);
 }
 
+void MainWindow::preferences()
+{
+    static QPointer<PreferencesWidget> widget;
+
+    if (!widget) {
+        widget = new PreferencesWidget;
+        widget->setAttribute(Qt::WA_DeleteOnClose);
+        widget->show();
+    } else {
+        widget->show();
+        widget->raise();
+        widget->activateWindow();
+    }
+}
+
 void MainWindow::setupConnections()
 {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
@@ -99,6 +121,8 @@ void MainWindow::setupConnections()
     connect(ui->actionMoveTool, SIGNAL(triggered(bool)), this, SLOT(onMoveToolTriggered(bool)));
     connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));
 
+    connect(ui->actionPreferences, SIGNAL(triggered(bool)), this, SLOT(preferences()));
+
     connect(ui->actionZoomIn, SIGNAL(triggered()), m_view, SLOT(zoomIn()));
     connect(ui->actionZoomOut, SIGNAL(triggered()), m_view, SLOT(zoomOut()));
     connect(ui->actionNormalSize, SIGNAL(triggered()), m_view, SLOT(normalSize()));
@@ -112,4 +136,29 @@ void MainWindow::setupConnections()
 
     connect(ui->actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+}
+
+void MainWindow::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("Image Viewer");
+    QImageViewSettings *imageSettings = QImageViewSettings::globalSettings();
+
+    int type = settings.value("image background type", QImageViewSettings::None).toInt();
+    QColor imageColor = settings.value("image background color", QColor(255, 255, 255)).value<QColor>();
+    QColor backgroundColor = settings.value("background color", QColor(128, 128, 128)).value<QColor>();
+    imageSettings->setiImageBackgroundType(QImageViewSettings::ImageBackgroundType(type));
+    imageSettings->setImageBackgroundColor(imageColor);
+    imageSettings->setBackgroundColor(backgroundColor);
+}
+
+void MainWindow::saveSettings()
+{
+    QSettings settings;
+    settings.beginGroup("Image Viewer");
+    QImageViewSettings *imageSettings = QImageViewSettings::globalSettings();
+
+    settings.setValue("image background type", (int)imageSettings->imageBackgroundType());
+    settings.setValue("image background color", imageSettings->imageBackgroundColor());
+    settings.setValue("background color", imageSettings->backgroundColor());
 }

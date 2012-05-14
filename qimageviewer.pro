@@ -16,6 +16,7 @@ SOURCES += main.cpp\
     qsingleimageview.cpp \
     mainwindow.cpp \
     qimageviewsettings.cpp \
+    preferenceswidget.cpp \
     qcolorbutton.cpp
 
 HEADERS  += \
@@ -24,8 +25,10 @@ HEADERS  += \
     mainwindow.h \
     qimageviewsettings.h \
     qimageviewsettings_p.h \
+    preferenceswidget.h \
     qcolorbutton.h \
     qcolorbutton_p.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    preferenceswidget.ui

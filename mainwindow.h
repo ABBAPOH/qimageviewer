@@ -28,8 +28,13 @@ private slots:
     void onMoveToolTriggered(bool);
     void onSelectionToolTriggered(bool);
 
+    void preferences();
+
 private:
     void setupConnections();
+
+    void loadSettings();
+    void saveSettings();
 
 private:
     Ui::MainWindow *ui;
