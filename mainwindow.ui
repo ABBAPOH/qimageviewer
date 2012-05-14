@@ -102,8 +102,9 @@
    </attribute>
    <addaction name="actionZoomIn"/>
    <addaction name="actionZoomOut"/>
-   <addaction name="actionNormalSize"/>
-   <addaction name="actionBestFit"/>
+   <addaction name="separator"/>
+   <addaction name="actionMoveTool"/>
+   <addaction name="actionSelectionTool"/>
    <addaction name="separator"/>
    <addaction name="actionRotateLeft"/>
    <addaction name="actionRotateRight"/>
