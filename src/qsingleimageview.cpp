@@ -449,8 +449,6 @@ qreal QSingleImageViewPrivate::getFitInViewFactor() const
         return 1.0;
 
     QSize size = q->size();
-    size.rwidth() -= q->verticalScrollBar()->isVisible() ? q->verticalScrollBar()->width() : 0;
-    size.rheight() -= q->verticalScrollBar()->isVisible() ? q->horizontalScrollBar()->height() : 0;
 
     int w = imageSize.width(), mw = size.width();
     int h = imageSize.height(), mh = size.height();
@@ -557,6 +555,8 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
 
     horizontalScrollBar()->setSingleStep(10);
     verticalScrollBar()->setSingleStep(10);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     setMouseMode(MouseModeMove);
 
