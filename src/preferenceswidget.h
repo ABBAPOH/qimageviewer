@@ -23,6 +23,8 @@ private slots:
     void backgroundColorChanged(const QColor &color);
     void imageColorChanged(const QColor &color);
 
+    void useOpenGLClicked(bool);
+
 private:
     Ui::PreferencesWidget *ui;
 };

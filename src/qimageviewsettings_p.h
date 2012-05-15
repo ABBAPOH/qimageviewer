@@ -17,9 +17,12 @@ public:
     QImageViewSettings::ImageBackgroundType imageBackgroundType;
     QColor imageBackgroundColor;
     QColor backgroundColor;
+    bool useOpenGL;
 
 private:
     QList<QSingleImageView *> views;
+
+    friend class QImageViewSettings;
 };
 
 #endif // QIMAGEVIEWSETTINGS_P_H

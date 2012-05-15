@@ -39,6 +39,9 @@ PreferencesWidget::PreferencesWidget(QWidget *parent) :
 
     connect(ui->backgroundButton, SIGNAL(colorChanged(QColor)), SLOT(backgroundColorChanged(QColor)));
     connect(ui->solidColorButton, SIGNAL(colorChanged(QColor)), SLOT(imageColorChanged(QColor)));
+
+    ui->useOpenGL->setChecked(settings->useOpenGL());
+    connect(ui->useOpenGL, SIGNAL(clicked(bool)), SLOT(useOpenGLClicked(bool)));
 }
 
 PreferencesWidget::~PreferencesWidget()
@@ -72,4 +75,9 @@ void PreferencesWidget::backgroundColorChanged(const QColor &color)
 void PreferencesWidget::imageColorChanged(const QColor &color)
 {
     QImageViewSettings::globalSettings()->setImageBackgroundColor(color);
+}
+
+void PreferencesWidget::useOpenGLClicked(bool clicked)
+{
+    QImageViewSettings::globalSettings()->setUseOpenGL(clicked);
 }

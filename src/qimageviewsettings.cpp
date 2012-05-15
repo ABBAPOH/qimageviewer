@@ -4,6 +4,7 @@
 #include <QApplication>
 
 #include "qsingleimageview.h"
+#include "qsingleimageview_p.h"
 
 void QImageViewSettingsPrivate::addView(QSingleImageView *view)
 {
@@ -94,5 +95,24 @@ void QImageViewSettings::setBackgroundColor(const QColor &color)
     if (d->backgroundColor != color) {
         d->backgroundColor = color;
         d->updateViews();
+    }
+}
+
+bool QImageViewSettings::useOpenGL() const
+{
+    return d_func()->useOpenGL;
+}
+
+void QImageViewSettings::setUseOpenGL(bool yes)
+{
+    Q_D(QImageViewSettings);
+
+    if (d->useOpenGL != yes) {
+        d->useOpenGL = yes;
+
+        foreach (QSingleImageView *view, d->views) {
+            view->d_func()->recreateViewport(d->useOpenGL);
+        }
+
     }
 }

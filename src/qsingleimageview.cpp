@@ -7,6 +7,8 @@
 #include <QtGui/QResizeEvent>
 #include <QtGui/QScrollBar>
 
+#include <QtOpenGL/QGLWidget>
+
 #include "qimageviewsettings.h"
 #include "qimageviewsettings_p.h"
 
@@ -196,6 +198,19 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     QObject::connect(undoStack, SIGNAL(canUndoChanged(bool)), q, SIGNAL(canUndoChanged(bool)));
 
     QObject::connect(undoStack, SIGNAL(indexChanged(int)), q, SLOT(undoIndexChanged(int)));
+}
+
+void QSingleImageViewPrivate::recreateViewport(bool useOpenGL)
+{
+    Q_Q(QSingleImageView);
+
+    if (useOpenGL) {
+        QGLFormat glFormat(QGL::SampleBuffers); // antialiasing
+//        glFormat.setSwapInterval(1); // vsync
+        q->setViewport(new QGLWidget(glFormat, q));
+    } else {
+        q->setViewport(new QWidget);
+    }
 }
 
 void QSingleImageViewPrivate::setZoomFactor(qreal factor)
@@ -488,6 +503,8 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QSingleImageViewPrivate(this))
 {
+    Q_D(QSingleImageView);
+
     setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
 
     horizontalScrollBar()->setSingleStep(10);
@@ -495,7 +512,10 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
 
     setMouseMode(MouseModeMove);
 
-    QImageViewSettings::globalSettings()->d_func()->addView(this);
+    QImageViewSettings *settings = QImageViewSettings::globalSettings();
+    if (settings->useOpenGL())
+        d->recreateViewport(true);
+    settings->d_func()->addView(this);
 }
 
 QSingleImageView::~QSingleImageView()
@@ -805,7 +825,7 @@ void QSingleImageView::paintEvent(QPaintEvent *)
 
     QPainter p(viewport());
     if (!d->hasRunningAnimations())
-        p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+        p.setRenderHints(QPainter::Antialiasing | QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
 
     QRect rect = viewport()->rect();
 

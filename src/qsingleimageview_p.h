@@ -98,6 +98,8 @@ class QSingleImageViewPrivate
 public:
     explicit QSingleImageViewPrivate(QSingleImageView *qq);
 
+    void recreateViewport(bool useOpenGL);
+
     void setZoomFactor(qreal factor);
     void setVisualZoomFactor(qreal factor);
 

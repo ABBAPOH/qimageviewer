@@ -147,9 +147,12 @@ void MainWindow::loadSettings()
     int type = settings.value("image background type", QImageViewSettings::None).toInt();
     QColor imageColor = settings.value("image background color", QColor(255, 255, 255)).value<QColor>();
     QColor backgroundColor = settings.value("background color", QColor(128, 128, 128)).value<QColor>();
+    bool useOpenGL = settings.value("use OpenGL", false).toBool();
+
     imageSettings->setiImageBackgroundType(QImageViewSettings::ImageBackgroundType(type));
     imageSettings->setImageBackgroundColor(imageColor);
     imageSettings->setBackgroundColor(backgroundColor);
+    imageSettings->setUseOpenGL(useOpenGL);
 }
 
 void MainWindow::saveSettings()
@@ -161,4 +164,5 @@ void MainWindow::saveSettings()
     settings.setValue("image background type", (int)imageSettings->imageBackgroundType());
     settings.setValue("image background color", imageSettings->imageBackgroundColor());
     settings.setValue("background color", imageSettings->backgroundColor());
+    settings.setValue("use OpenGL", imageSettings->useOpenGL());
 }

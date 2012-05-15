@@ -29,6 +29,9 @@ public:
     QColor backgroundColor() const;
     void setBackgroundColor(const QColor &color);
 
+    bool useOpenGL() const;
+    void setUseOpenGL(bool yes);
+
 private:
     QImageViewSettingsPrivate *d_ptr;
 

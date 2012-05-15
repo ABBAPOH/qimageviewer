@@ -82,6 +82,8 @@ protected:
 protected:
     QSingleImageViewPrivate *d_ptr;
 
+    friend class QImageViewSettings;
+
     Q_PRIVATE_SLOT(d_func(), void updateScrollBars())
     Q_PRIVATE_SLOT(d_func(), void animationFinished())
     Q_PRIVATE_SLOT(d_func(), void undoIndexChanged(int))
