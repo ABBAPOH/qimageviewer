@@ -182,6 +182,7 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
+    axisAnimationCount(0),
     mousePressed(false),
     canCopy(false),
     undoStack(new QUndoStack(qq)),
@@ -314,7 +315,8 @@ void QSingleImageViewPrivate::updateViewport()
 
 void QSingleImageViewPrivate::animationFinished()
 {
-    if (!hasRunningAnimations())
+    axisAnimationCount--;
+    if (!axisAnimationCount)
         syncPixmap();
 }
 
@@ -338,17 +340,13 @@ void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, in
     animation->setDuration(msecs);
     animation->start();
     runningAnimations.append(animation);
+    axisAnimationCount++;
     QObject::connect(animation, SIGNAL(finished()), q, SLOT(animationFinished()));
 }
 
 bool QSingleImageViewPrivate::hasRunningAnimations() const
 {
-    foreach (AxisAnimation *animation, runningAnimations) {
-        if (animation->state() == QVariantAnimation::Running)
-            return true;
-    }
-
-    return false;
+    return axisAnimationCount || (zoomAnimation.state() == QVariantAnimation::Running);
 }
 
 void QSingleImageViewPrivate::stopAnimations()
@@ -806,6 +804,9 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     Q_D(QSingleImageView);
 
     QPainter p(viewport());
+    if (!d->hasRunningAnimations())
+        p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+
     QRect rect = viewport()->rect();
 
     // Draw viewport background

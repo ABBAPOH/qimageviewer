@@ -136,6 +136,7 @@ public:
     ZoomAnimation zoomAnimation;
 
     QList<AxisAnimation *> runningAnimations;
+    int axisAnimationCount;
 
     bool mousePressed;
     QPoint startPos;
