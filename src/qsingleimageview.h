@@ -56,6 +56,8 @@ public slots:
     void fitInView();
     void normalSize();
 
+    void resizeImage(const QSize &size);
+
     void rotateLeft();
     void rotateRight();
 

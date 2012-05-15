@@ -91,6 +91,19 @@ private:
     QImage m_image;
 };
 
+class ResizeCommand : public ImageViewCommand
+{
+public:
+    explicit ResizeCommand(const QSize &size, QSingleImageViewPrivate *dd);
+
+    void redo();
+    void undo();
+
+private:
+    QSize m_size;
+    QImage m_image;
+};
+
 class QSingleImageViewPrivate
 {
     Q_DECLARE_PUBLIC(QSingleImageView)

@@ -148,7 +148,7 @@ void VFlipCommand::undo()
     d->flipVertically();
 }
 
-CutCommand::CutCommand(const QRect &rect, QSingleImageViewPrivate *dd):
+CutCommand::CutCommand(const QRect &rect, QSingleImageViewPrivate *dd) :
     ImageViewCommand(dd),
     m_rect(rect)
 {
@@ -177,6 +177,25 @@ void CutCommand::undo()
         }
     }
 
+    d->syncPixmap();
+}
+
+ResizeCommand::ResizeCommand(const QSize &size, QSingleImageViewPrivate *dd) :
+    ImageViewCommand(dd),
+    m_size(size)
+{
+}
+
+void ResizeCommand::redo()
+{
+    m_image = d->image;
+    d->image = d->image.scaled(m_size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    d->syncPixmap();
+}
+
+void ResizeCommand::undo()
+{
+    d->image = m_image;
     d->syncPixmap();
 }
 
@@ -700,6 +719,16 @@ void QSingleImageView::normalSize()
     Q_D(QSingleImageView);
 
     d->setZoomFactor(1.0);
+}
+
+void QSingleImageView::resizeImage(const QSize &size)
+{
+    Q_D(QSingleImageView);
+
+    if (size.isEmpty())
+        return;
+
+    d->undoStack->push(new ResizeCommand(size, d));
 }
 
 void QSingleImageView::rotateLeft()

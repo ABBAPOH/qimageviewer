@@ -8,6 +8,7 @@
 #include <QMessageBox>
 
 #include "qsingleimageview.h"
+#include "qimageresizedialog.h"
 #include "qimageviewsettings.h"
 #include "preferenceswidget.h"
 
@@ -99,6 +100,15 @@ void MainWindow::preferences()
     }
 }
 
+void MainWindow::resizeImage()
+{
+    QImageResizeDialog d(this);
+    d.setImageSize(m_view->image().size());
+    if (d.exec()) {
+        m_view->resizeImage(d.imageSize());
+    }
+}
+
 void MainWindow::setupConnections()
 {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
@@ -122,6 +132,8 @@ void MainWindow::setupConnections()
     connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));
 
     connect(ui->actionPreferences, SIGNAL(triggered(bool)), this, SLOT(preferences()));
+
+    connect(ui->actionResizeImage, SIGNAL(triggered()), this, SLOT(resizeImage()));
 
     connect(ui->actionZoomIn, SIGNAL(triggered()), m_view, SLOT(zoomIn()));
     connect(ui->actionZoomOut, SIGNAL(triggered()), m_view, SLOT(zoomOut()));

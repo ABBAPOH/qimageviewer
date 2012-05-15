@@ -30,6 +30,8 @@ private slots:
 
     void preferences();
 
+    void resizeImage();
+
 private:
     void setupConnections();
 

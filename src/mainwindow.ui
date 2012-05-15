@@ -71,6 +71,8 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="actionResizeImage"/>
+    <addaction name="separator"/>
     <addaction name="actionRotateLeft"/>
     <addaction name="actionRotateRight"/>
     <addaction name="separator"/>
@@ -305,6 +307,11 @@
    </property>
    <property name="menuRole">
     <enum>QAction::PreferencesRole</enum>
+   </property>
+  </action>
+  <action name="actionResizeImage">
+   <property name="text">
+    <string>Resize image...</string>
    </property>
   </action>
  </widget>

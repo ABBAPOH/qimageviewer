@@ -6,7 +6,8 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     qimageviewsettings.cpp \
     preferenceswidget.cpp \
-    qcolorbutton.cpp
+    qcolorbutton.cpp \
+    src/qimageresizedialog.cpp
 
 HEADERS  += \
     qsingleimageview.h \
@@ -16,9 +17,11 @@ HEADERS  += \
     qimageviewsettings_p.h \
     preferenceswidget.h \
     qcolorbutton.h \
-    qcolorbutton_p.h
+    qcolorbutton_p.h \
+    src/qimageresizedialog.h
 
 FORMS += \
     mainwindow.ui \
-    preferenceswidget.ui
+    preferenceswidget.ui \
+    src/qimageresizedialog.ui
 
