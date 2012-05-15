@@ -122,6 +122,7 @@ public:
 
     QPointF getCenter() const;
     QRect selectedImageRect() const;
+    qreal getFitInViewFactor() const;
 
     void drawBackground(QPainter *p);
     void drawSelection(QPainter *p);

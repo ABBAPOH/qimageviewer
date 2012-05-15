@@ -126,7 +126,7 @@ void MainWindow::setupConnections()
     connect(ui->actionZoomIn, SIGNAL(triggered()), m_view, SLOT(zoomIn()));
     connect(ui->actionZoomOut, SIGNAL(triggered()), m_view, SLOT(zoomOut()));
     connect(ui->actionNormalSize, SIGNAL(triggered()), m_view, SLOT(normalSize()));
-    connect(ui->actionBestFit, SIGNAL(triggered()), m_view, SLOT(bestFit()));
+    connect(ui->actionFitInView, SIGNAL(triggered()), m_view, SLOT(fitInView()));
 
     connect(ui->actionRotateLeft, SIGNAL(triggered()), m_view, SLOT(rotateLeft()));
     connect(ui->actionRotateRight, SIGNAL(triggered()), m_view, SLOT(rotateRight()));

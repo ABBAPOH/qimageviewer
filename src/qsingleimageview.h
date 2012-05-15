@@ -53,6 +53,7 @@ public slots:
     void zoomIn();
     void zoomOut();
     void bestFit();
+    void fitInView();
     void normalSize();
 
     void rotateLeft();

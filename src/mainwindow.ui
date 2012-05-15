@@ -64,7 +64,7 @@
     </property>
     <addaction name="actionZoomIn"/>
     <addaction name="actionZoomOut"/>
-    <addaction name="actionBestFit"/>
+    <addaction name="actionFitInView"/>
     <addaction name="actionNormalSize"/>
    </widget>
    <widget class="QMenu" name="menuTools">
@@ -144,9 +144,9 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionBestFit">
+  <action name="actionFitInView">
    <property name="text">
-    <string>Best Fit</string>
+    <string>Fit in view</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+9</string>

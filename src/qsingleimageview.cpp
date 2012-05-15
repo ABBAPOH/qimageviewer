@@ -421,6 +421,35 @@ QRect QSingleImageViewPrivate::selectedImageRect() const
     return result;
 }
 
+qreal QSingleImageViewPrivate::getFitInViewFactor() const
+{
+    Q_Q(const QSingleImageView);
+
+    QSize imageSize = image.size();
+    if (imageSize.isEmpty())
+        return 1.0;
+
+    QSize size = q->size();
+    size.rwidth() -= q->verticalScrollBar()->isVisible() ? q->verticalScrollBar()->width() : 0;
+    size.rheight() -= q->verticalScrollBar()->isVisible() ? q->horizontalScrollBar()->height() : 0;
+
+    int w = imageSize.width(), mw = size.width();
+    int h = imageSize.height(), mh = size.height();
+
+    double rw = 1.0*mw/w, rh = 1.0*mh/h, factor = 1;
+
+    if (rw < 1 && rh > 1)
+        factor = rw;
+    else if (rw > 1 && rh < 1)
+        factor = rh;
+    else if (rw < 1 && rh < 1)
+        factor = qMin(rw, rh);
+    else
+        factor = qMin(rw, rh);
+
+    return factor;
+}
+
 void QSingleImageViewPrivate::drawBackground(QPainter *p)
 {
     QImageViewSettings *settings = QImageViewSettings::globalSettings();
@@ -650,25 +679,19 @@ void QSingleImageView::bestFit()
     if (d->image.isNull())
         return;
 
-    QSize imageSize = d->image.size();
-    QSize size = this->size();
-    size.rwidth() -= verticalScrollBar()->isVisible() ? verticalScrollBar()->width() : 0;
-    size.rheight() -= verticalScrollBar()->isVisible() ? horizontalScrollBar()->height() : 0;
+    qreal factor = d->getFitInViewFactor();
+    factor = qMin(factor, 1.0);
+    d->setZoomFactor(factor);
+}
 
-    int w = imageSize.width(), mw = size.width();
-    int h = imageSize.height(), mh = size.height();
+void QSingleImageView::fitInView()
+{
+    Q_D(QSingleImageView);
 
-    double rw = 1.0*mw/w, rh = 1.0*mh/h, factor = 1;
+    if (d->image.isNull())
+        return;
 
-    if (rw < 1 && rh > 1)
-        factor = rw;
-    else if (rw > 1 && rh < 1)
-        factor = rh;
-    else if (rw < 1 && rh < 1)
-        factor = qMin(rw, rh);
-    else
-        factor = qMin(rw, rh);
-
+    qreal factor = d->getFitInViewFactor();
     d->setZoomFactor(factor);
 }
 
