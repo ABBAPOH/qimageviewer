@@ -434,7 +434,7 @@ qreal QSingleImageViewPrivate::getFitInViewFactor() const
     if (imageSize.isEmpty())
         return 1.0;
 
-    QSize size = q->size();
+    QSize size = q->maximumViewportSize();
 
     int w = imageSize.width(), mw = size.width();
     int h = imageSize.height(), mh = size.height();
