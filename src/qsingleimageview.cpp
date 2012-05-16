@@ -324,19 +324,11 @@ void QSingleImageViewPrivate::updateScrollBars()
     int hmax = size.width() - q->viewport()->width();
     int vmax = size.height() - q->viewport()->height();
 
-    double rh = q->horizontalScrollBar()->maximum() == 0 ?
-                0.5 :
-                1.0*q->horizontalScrollBar()->value() / q->horizontalScrollBar()->maximum();
+    hmax = qMax(0, hmax);
+    vmax = qMax(0, vmax);
 
-    double rv = q->verticalScrollBar()->maximum() == 0 ?
-                0.5 :
-                1.0*q->verticalScrollBar()->value() / q->verticalScrollBar()->maximum();
-
-    q->horizontalScrollBar()->setRange(0, hmax > 0 ? hmax : 0);
-    q->horizontalScrollBar()->setValue(rh * q->horizontalScrollBar()->maximum() + 0.5);
-
-    q->verticalScrollBar()->setRange(0, vmax > 0 ? vmax : 0);
-    q->verticalScrollBar()->setValue(rv * q->verticalScrollBar()->maximum() + 0.5);
+    q->horizontalScrollBar()->setRange(-hmax/2.0, hmax/2.0 + 0.5);
+    q->verticalScrollBar()->setRange(-vmax/2.0, vmax/2.0 + 0.5);
 
     q->viewport()->update();
 }
@@ -404,18 +396,12 @@ QPointF QSingleImageViewPrivate::getCenter() const
 {
     Q_Q(const QSingleImageView);
 
-    qreal factor = visualZoomFactor;
-
     int hvalue = q->horizontalScrollBar()->value();
     int vvalue = q->verticalScrollBar()->value();
 
-    if (q->horizontalScrollBar()->maximum() == 0)
-        hvalue = -(q->viewport()->width() - factor*pixmap.width())/2;
+    QSizeF size = q->viewport()->size()/2.0 - QSizeF(hvalue, vvalue);
 
-    if (q->verticalScrollBar()->maximum() == 0)
-        vvalue = -(q->viewport()->height() - factor*pixmap.height())/2;
-
-    return QPointF(factor*pixmap.width()/2.0 - hvalue, factor*pixmap.height()/2.0 - vvalue);
+    return QPointF(size.width(), size.height());
 }
 
 QRect QSingleImageViewPrivate::selectedImageRect() const
