@@ -541,6 +541,8 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
 
     horizontalScrollBar()->setSingleStep(10);
     verticalScrollBar()->setSingleStep(10);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     setMouseMode(MouseModeMove);
 
