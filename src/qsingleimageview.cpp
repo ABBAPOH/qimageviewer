@@ -398,15 +398,15 @@ void QSingleImageViewPrivate::stopAnimations()
     foreach (AxisAnimation *animation, runningAnimations) {
         animation->stop();
     }
+
+    qDeleteAll(runningAnimations);
+    runningAnimations.clear();
+    axisAnimationCount = 0;
 }
 
 void QSingleImageViewPrivate::syncPixmap()
 {
     pixmap = QPixmap::fromImage(image);
-
-    qDeleteAll(runningAnimations);
-    runningAnimations.clear();
-    axisAnimationCount = 0;
 
     updateViewport();
 }
@@ -461,15 +461,15 @@ void QSingleImageViewPrivate::updateThumbnailsGeometry()
 {
     Q_Q(QSingleImageView);
 
-    QRect r = q->rect();
+    QRect rect = q->rect();
     switch (thumbnailsPosition) {
-    case QSingleImageView::North: r.setHeight(100); break;
-    case QSingleImageView::South: r.setY(r.y() + r.height() - 100); break;
-    case QSingleImageView::West: r.setWidth(100); break;
-    case QSingleImageView::East: r.setX(r.x() + r.width() - 100); break;
+    case QSingleImageView::North: rect.setHeight(100); break;
+    case QSingleImageView::South: rect.setY(rect.y() + rect.height() - 100); break;
+    case QSingleImageView::West: rect.setWidth(100); break;
+    case QSingleImageView::East: rect.setX(rect.x() + rect.width() - 100); break;
     default: break;
     }
-    listWidget->setGeometry(r);
+    listWidget->setGeometry(rect);
 }
 
 QPointF QSingleImageViewPrivate::getCenter() const
