@@ -754,7 +754,7 @@ bool QSingleImageView::isModified() const
 {
     Q_D(const QSingleImageView);
 
-    return d->undoStackIndex == d->undoStack->index();
+    return d->undoStackIndex != d->undoStack->index();
 }
 
 void QSingleImageView::setModified(bool modified)
