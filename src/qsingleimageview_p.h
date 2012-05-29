@@ -6,6 +6,8 @@
 #include <QtCore/QVariantAnimation>
 #include <QtGui/QUndoCommand>
 
+class QListWidget;
+
 // Animations
 class ZoomAnimation : public QVariantAnimation
 {
@@ -132,6 +134,9 @@ public:
     bool hasRunningAnimations() const;
     void stopAnimations();
     void syncPixmap();
+    void setImage(const QImage &image);
+    void updateThumbnailsState();
+    void updateThumbnailsGeometry();
 
     QPointF getCenter() const;
     QRect selectedImageRect() const;
@@ -141,10 +146,18 @@ public:
     void drawSelection(QPainter *p);
 
 public:
+    struct ImageData
+    {
+        ImageData() : nextImageDelay(0) {}
+        QImage image;
+        int nextImageDelay;
+    };
+
+    QList<ImageData> images;
+    int currentImageNumber;
     QImage image;
     QSingleImageView::MouseMode mouseMode;
 
-    QPixmap originalPixmap;
     QPixmap pixmap;
 
     qreal zoomFactor;
@@ -164,6 +177,9 @@ public:
     QUndoStack *undoStack;
     int undoStackIndex;
     bool modified;
+
+    QListWidget *listWidget;
+    QSingleImageView::Position thumbnailsPosition;
 
 private:
     QSingleImageView *q_ptr;

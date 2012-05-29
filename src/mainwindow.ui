@@ -66,6 +66,9 @@
     <addaction name="actionZoomOut"/>
     <addaction name="actionFitInView"/>
     <addaction name="actionNormalSize"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreviousImage"/>
+    <addaction name="actionNextImage"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -312,6 +315,22 @@
   <action name="actionResizeImage">
    <property name="text">
     <string>Resize image...</string>
+   </property>
+  </action>
+  <action name="actionPreviousImage">
+   <property name="text">
+    <string>Previous image</string>
+   </property>
+   <property name="shortcut">
+    <string>Left</string>
+   </property>
+  </action>
+  <action name="actionNextImage">
+   <property name="text">
+    <string>Next image</string>
+   </property>
+   <property name="shortcut">
+    <string>Right</string>
    </property>
   </action>
  </widget>

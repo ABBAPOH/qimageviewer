@@ -22,6 +22,14 @@ public:
     };
     Q_ENUMS(MouseMode)
 
+    enum Position {
+        North = 0,
+        South = 1,
+        West = 2,
+        East = 3
+    };
+    Q_ENUMS(Position)
+
     explicit QSingleImageView(QWidget *parent = 0);
     ~QSingleImageView();
 
@@ -30,8 +38,14 @@ public:
     bool canRedo() const;
     bool canUndo() const;
 
+    void read(QIODevice *device, const QByteArray &format = QByteArray());
+    void write(QIODevice *device, const QByteArray &format = QByteArray());
+
     QImage image() const;
     void setImage(const QImage &image);
+
+    int currentImageNumber() const;
+    int imageCount() const;
 
     bool isModified() const;
     void setModified(bool modified);
@@ -41,6 +55,9 @@ public:
 
     QRect selectedImageRect() const;
     QImage selectedImage() const;
+
+    Position thumbnailsPosition() const;
+    void setThumbnailsPosition(Position position);
 
 signals:
     void mouseModeChanged(MouseMode mode);
@@ -55,6 +72,10 @@ public slots:
     void bestFit();
     void fitInView();
     void normalSize();
+
+    void jumpToImage(int imageNumber);
+    void nextImage();
+    void prevImage();
 
     void resizeImage(const QSize &size);
 
@@ -80,6 +101,7 @@ protected:
     void keyPressEvent(QKeyEvent *);
 
     void paintEvent(QPaintEvent *);
+    void resizeEvent(QResizeEvent *);
     bool viewportEvent(QEvent *);
 
 protected:

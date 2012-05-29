@@ -3,6 +3,9 @@
 
 #include <QtGui/QApplication>
 #include <QtGui/QClipboard>
+#include <QtGui/QListWidget>
+#include <QtGui/QImageReader>
+#include <QtGui/QImageWriter>
 #include <QtGui/QPainter>
 #include <QtGui/QResizeEvent>
 #include <QtGui/QScrollBar>
@@ -200,6 +203,7 @@ void ResizeCommand::undo()
 }
 
 QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
+    currentImageNumber(-1),
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
@@ -209,9 +213,23 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     undoStack(new QUndoStack(qq)),
     undoStackIndex(0),
     modified(0),
+    listWidget(new QListWidget(qq)),
+    thumbnailsPosition(QSingleImageView::East),
     q_ptr(qq)
 {
     Q_Q(QSingleImageView);
+
+    listWidget->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+    QPalette palette = listWidget->palette();
+    palette.setColor(QPalette::Base, QColor(128, 128, 128));
+    listWidget->setPalette(palette);
+    listWidget->setGridSize(QSize(100, 100));
+    listWidget->setIconSize(QSize(64, 64));
+    listWidget->setFlow(QListView::LeftToRight);
+    listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    listWidget->setFocusPolicy(Qt::NoFocus);
+    QObject::connect(listWidget, SIGNAL(currentRowChanged(int)), q, SLOT(jumpToImage(int)));
 
     QObject::connect(undoStack, SIGNAL(canRedoChanged(bool)), q, SIGNAL(canRedoChanged(bool)));
     QObject::connect(undoStack, SIGNAL(canUndoChanged(bool)), q, SIGNAL(canUndoChanged(bool)));
@@ -354,7 +372,6 @@ void QSingleImageViewPrivate::undoIndexChanged(int index)
         setModified(true);
 }
 
-
 void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs)
 {
     Q_Q(QSingleImageView);
@@ -388,8 +405,70 @@ void QSingleImageViewPrivate::syncPixmap()
 
     qDeleteAll(runningAnimations);
     runningAnimations.clear();
+    axisAnimationCount = 0;
 
     updateViewport();
+}
+
+void QSingleImageViewPrivate::setImage(const QImage &image)
+{
+    this->image = image;
+
+    stopAnimations();
+    syncPixmap();
+}
+
+void QSingleImageViewPrivate::updateThumbnailsState()
+{
+    Q_Q(QSingleImageView);
+
+    switch (thumbnailsPosition) {
+    case QSingleImageView::North:
+    case QSingleImageView::South:
+        listWidget->setFlow(QListView::LeftToRight);
+        listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        break;
+    case QSingleImageView::West:
+    case QSingleImageView::East:
+        listWidget->setFlow(QListView::TopToBottom);
+        listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+        break;
+    default:
+        break;
+    }
+
+    if (q->imageCount() > 1) {
+        QMargins margins(0, 0, 0, 0);
+        switch (thumbnailsPosition) {
+        case QSingleImageView::North: margins.setTop(100); break;
+        case QSingleImageView::South: margins.setBottom(100); break;
+        case QSingleImageView::West: margins.setLeft(100); break;
+        case QSingleImageView::East: margins.setRight(100); break;
+        default: break;
+        }
+        q->setViewportMargins(margins);
+        listWidget->setVisible(true);
+    } else {
+        q->setViewportMargins(0, 0, 0, 0);
+        listWidget->setVisible(false);
+    }
+}
+
+void QSingleImageViewPrivate::updateThumbnailsGeometry()
+{
+    Q_Q(QSingleImageView);
+
+    QRect r = q->rect();
+    switch (thumbnailsPosition) {
+    case QSingleImageView::North: r.setHeight(100); break;
+    case QSingleImageView::South: r.setY(r.y() + r.height() - 100); break;
+    case QSingleImageView::West: r.setWidth(100); break;
+    case QSingleImageView::East: r.setX(r.x() + r.width() - 100); break;
+    default: break;
+    }
+    listWidget->setGeometry(r);
 }
 
 QPointF QSingleImageViewPrivate::getCenter() const
@@ -550,6 +629,8 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     if (settings->useOpenGL())
         d->recreateViewport(true);
     settings->d_func()->addView(this);
+
+    d->updateThumbnailsState();
 }
 
 QSingleImageView::~QSingleImageView()
@@ -579,6 +660,47 @@ bool QSingleImageView::canUndo() const
     return d->undoStack->canUndo();
 }
 
+void QSingleImageView::read(QIODevice *device, const QByteArray &format)
+{
+    Q_D(QSingleImageView);
+
+    d->images.clear();
+    d->listWidget->clear();
+
+    QImageReader reader(device, format);
+    for (int i = 0; i < reader.imageCount(); ++i) {
+        QSingleImageViewPrivate::ImageData data;
+        data.image = reader.read();
+        data.nextImageDelay = reader.nextImageDelay();
+        d->images.append(data);
+
+        QListWidgetItem *item = new QListWidgetItem(d->listWidget);
+        item->setIcon(QIcon(QPixmap::fromImage(data.image)));
+        d->listWidget->addItem(item);
+    }
+
+    if (d->images.isEmpty()) {
+        d->zoomFactor = 1.0;
+        d->visualZoomFactor = 1.0;
+        d->updateScrollBars();
+        return;
+    }
+
+    d->setImage(d->images.first().image);
+
+    d->updateThumbnailsState();
+    bestFit();
+    viewport()->update();
+}
+
+void QSingleImageView::write(QIODevice *device, const QByteArray &format)
+{
+    Q_D(QSingleImageView);
+
+    QImageWriter writer(device, format);
+    writer.write(d->image);
+}
+
 QImage QSingleImageView::image() const
 {
     Q_D(const QSingleImageView);
@@ -590,20 +712,41 @@ void QSingleImageView::setImage(const QImage &image)
 {
     Q_D(QSingleImageView);
 
-    d->image = image;
+    d->images.clear();
 
-    d->stopAnimations();
-    d->syncPixmap();
-
-    if (d->image.isNull()) {
+    if (image.isNull()) {
+        d->setImage(QImage());
+        d->currentImageNumber = -1;
         d->zoomFactor = 1.0;
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
         return;
     }
 
+    d->setImage(image);
+    QSingleImageViewPrivate::ImageData data;
+    data.image = image;
+    data.nextImageDelay = 0;
+    d->images.append(data);
+    d->currentImageNumber = 0;
+
+    d->updateThumbnailsState();
     bestFit();
     viewport()->update();
+}
+
+int QSingleImageView::currentImageNumber() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->currentImageNumber;
+}
+
+int QSingleImageView::imageCount() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->images.count();
 }
 
 bool QSingleImageView::isModified() const
@@ -663,6 +806,24 @@ QImage QSingleImageView::selectedImage() const
     return d->image.copy(selectedImageRect());
 }
 
+QSingleImageView::Position QSingleImageView::thumbnailsPosition() const
+{
+    Q_D(const QSingleImageView);
+
+    return d->thumbnailsPosition;
+}
+
+void QSingleImageView::setThumbnailsPosition(QSingleImageView::Position position)
+{
+    Q_D(QSingleImageView);
+
+    if (d->thumbnailsPosition == position)
+        return;
+
+    d->thumbnailsPosition = position;
+    d->updateThumbnailsState();
+}
+
 void QSingleImageView::zoomIn()
 {
     Q_D(QSingleImageView);
@@ -705,6 +866,36 @@ void QSingleImageView::normalSize()
     Q_D(QSingleImageView);
 
     d->setZoomFactor(1.0);
+}
+
+void QSingleImageView::jumpToImage(int imageNumber)
+{
+    Q_D(QSingleImageView);
+
+    if (d->currentImageNumber == imageNumber)
+        return;
+
+    d->currentImageNumber = imageNumber;
+    d->listWidget->setCurrentIndex(d->listWidget->model()->index(imageNumber, 0, QModelIndex()));
+    d->setImage(d->images.at(imageNumber).image);
+}
+
+void QSingleImageView::nextImage()
+{
+    int count = imageCount();
+    if (!count)
+        return;
+
+    jumpToImage((currentImageNumber() + 1) % count);
+}
+
+void QSingleImageView::prevImage()
+{
+    int count = imageCount();
+    if (!count)
+        return;
+
+    jumpToImage((currentImageNumber() - 1 + count) % count);
 }
 
 void QSingleImageView::resizeImage(const QSize &size)
@@ -902,6 +1093,13 @@ void QSingleImageView::paintEvent(QPaintEvent *)
 
     // Draw vieport's and pixmap's selections
     d->drawSelection(&p);
+}
+
+void QSingleImageView::resizeEvent(QResizeEvent *)
+{
+    Q_D(QSingleImageView);
+
+    d->updateThumbnailsGeometry();
 }
 
 bool QSingleImageView::viewportEvent(QEvent *e)

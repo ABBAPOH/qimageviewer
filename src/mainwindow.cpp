@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QDebug>
 #include <QPointer>
 #include <QSettings>
 
@@ -54,12 +55,17 @@ void MainWindow::open()
         return;
 
     m_file = file;
-    m_view->setImage(QImage(file));
+    QFile *f = new QFile(file);
+    if (!f->open(QFile::ReadOnly))
+        qWarning() << "Can't open file" << file;
+    m_view->read(f);
 }
 
 void MainWindow::save()
 {
-    m_view->image().save(m_file);
+    QFile f(m_file);
+    m_view->write(&f, QFileInfo(m_file).suffix().toUtf8());
+//    m_view->image().save(m_file);
     m_view->setModified(false);
 }
 
@@ -139,6 +145,9 @@ void MainWindow::setupConnections()
     connect(ui->actionZoomOut, SIGNAL(triggered()), m_view, SLOT(zoomOut()));
     connect(ui->actionNormalSize, SIGNAL(triggered()), m_view, SLOT(normalSize()));
     connect(ui->actionFitInView, SIGNAL(triggered()), m_view, SLOT(fitInView()));
+
+    connect(ui->actionPreviousImage, SIGNAL(triggered()), m_view, SLOT(prevImage()));
+    connect(ui->actionNextImage, SIGNAL(triggered()), m_view, SLOT(nextImage()));
 
     connect(ui->actionRotateLeft, SIGNAL(triggered()), m_view, SLOT(rotateLeft()));
     connect(ui->actionRotateRight, SIGNAL(triggered()), m_view, SLOT(rotateRight()));
