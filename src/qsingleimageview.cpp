@@ -41,10 +41,10 @@ static QPixmap chessBoardBackground(const QSize &size)
         return QPixmap();
 
     static QSize previousSize;
-    static QPixmap cachedPismap;
+    static QPixmap cachedPixmap;
 
     if (size == previousSize) {
-        return cachedPismap;
+        return cachedPixmap;
     }
 
     int w = size.width(), h = size.height();
@@ -62,7 +62,7 @@ static QPixmap chessBoardBackground(const QSize &size)
     p.end();
 
     previousSize = size;
-    cachedPismap = m;
+    cachedPixmap = m;
 
     return m;
 }
