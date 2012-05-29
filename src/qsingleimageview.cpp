@@ -49,16 +49,17 @@ static QPixmap chessBoardBackground(const QSize &size)
 
     int w = size.width(), h = size.height();
 
+    QPixmap background = ::chessBoardBackground();
     QPixmap m(w, h);
     QPainter p(&m);
     p.translate(w/2.0, h/2.0);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), background);
     p.rotate(90);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), background);
     p.rotate(90);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), background);
     p.rotate(90);
-    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), ::chessBoardBackground());
+    p.drawTiledPixmap(QRect(-8, -8, w/2 + 8, h/2 + 8), background);
     p.end();
 
     previousSize = size;
