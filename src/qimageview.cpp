@@ -419,6 +419,7 @@ void QImageViewPrivate::syncPixmap()
 {
     pixmap = QPixmap::fromImage(image);
 
+    stopAnimations();
     updateViewport();
 }
 
@@ -426,7 +427,6 @@ void QImageViewPrivate::setImage(const QImage &image)
 {
     this->image = image;
 
-    stopAnimations();
     syncPixmap();
 }
 
