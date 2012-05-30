@@ -12,3 +12,12 @@ TARGET = QImageViewer
 TEMPLATE = app
 
 include(src/qimageviewer.pri)
+
+win32 {
+  RC_FILE = src/qimageviewer.rc
+  ICON = src/icons/qimageviewer.ico
+}
+
+macx-* {
+  ICON = src/icons/qimageviewer.icns
+}
