@@ -214,6 +214,7 @@ QImageViewPrivate::QImageViewPrivate(QImageView *qq) :
     undoStack(new QUndoStack(qq)),
     undoStackIndex(0),
     modified(0),
+    canWrite(false),
     listWidget(new QListWidget(qq)),
     thumbnailsPosition(QImageView::East),
     q_ptr(qq)
@@ -302,6 +303,16 @@ void QImageViewPrivate::setModified(bool m)
     if (modified != m) {
         modified = m;
         emit q->modifiedChanged(modified);
+    }
+}
+
+void QImageViewPrivate::setCanWrite(bool can)
+{
+    Q_Q(QImageView);
+
+    if (canWrite != can) {
+        canWrite = can;
+        emit q->canWriteChanged(canWrite);
     }
 }
 
@@ -617,8 +628,6 @@ QImageView::QImageView(QWidget *parent) :
 {
     Q_D(QImageView);
 
-    setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
-
     horizontalScrollBar()->setSingleStep(10);
     verticalScrollBar()->setSingleStep(10);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -661,6 +670,13 @@ bool QImageView::canUndo() const
     return d->undoStack->canUndo();
 }
 
+bool QImageView::canWrite() const
+{
+    Q_D(const QImageView);
+
+    return d->canWrite;
+}
+
 void QImageView::read(QIODevice *device, const QByteArray &format)
 {
     Q_D(QImageView);
@@ -692,6 +708,7 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
     d->updateThumbnailsState();
     bestFit();
     viewport()->update();
+    d->setCanWrite(imageCount() == 1);
 }
 
 void QImageView::write(QIODevice *device, const QByteArray &format)
@@ -721,6 +738,7 @@ void QImageView::setImage(const QImage &image)
         d->zoomFactor = 1.0;
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
+        d->setCanWrite(false);
         return;
     }
 
@@ -730,6 +748,7 @@ void QImageView::setImage(const QImage &image)
     data.nextImageDelay = 0;
     d->images.append(data);
     d->currentImageNumber = 0;
+    d->setCanWrite(true);
 
     d->updateThumbnailsState();
     bestFit();

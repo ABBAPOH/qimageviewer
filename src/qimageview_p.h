@@ -120,6 +120,7 @@ public:
 
     void setCanCopy(bool can);
     void setModified(bool m);
+    void setCanWrite(bool can);
 
     void rotate(bool left);
     void flipHorizontally();
@@ -177,6 +178,7 @@ public:
     QUndoStack *undoStack;
     int undoStackIndex;
     bool modified;
+    bool canWrite;
 
     QListWidget *listWidget;
     QImageView::Position thumbnailsPosition;

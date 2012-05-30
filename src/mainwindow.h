@@ -32,6 +32,8 @@ private slots:
 
     void resizeImage();
 
+    void updateSaveActions();
+
 private:
     void setupConnections();
 

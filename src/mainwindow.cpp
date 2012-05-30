@@ -30,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     resize(800, 600);
     loadSettings();
+
+    m_view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
 }
 
 MainWindow::~MainWindow()
@@ -115,11 +117,20 @@ void MainWindow::resizeImage()
     }
 }
 
+void MainWindow::updateSaveActions()
+{
+    bool canSaveAs = m_view->canWrite();
+    bool canSave = canSaveAs && m_view->isModified();
+
+    ui->actionSave->setEnabled(canSave);
+    ui->actionSaveAs->setEnabled(canSaveAs);
+}
+
 void MainWindow::setupConnections()
 {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
-    connect(m_view, SIGNAL(modifiedChanged(bool)), ui->actionSave, SLOT(setEnabled(bool)));
+    connect(m_view, SIGNAL(modifiedChanged(bool)), this, SLOT(updateSaveActions()));
     connect(ui->actionSaveAs, SIGNAL(triggered()), this, SLOT(saveAs()));
 
     connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
@@ -133,6 +144,9 @@ void MainWindow::setupConnections()
     connect(m_view, SIGNAL(canCopyChanged(bool)), ui->actionCopy, SLOT(setEnabled(bool)));
     connect(ui->actionCut, SIGNAL(triggered()), m_view, SLOT(cut()));
     connect(m_view, SIGNAL(canCopyChanged(bool)), ui->actionCut, SLOT(setEnabled(bool)));
+
+    connect(m_view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(m_view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
 
     connect(ui->actionMoveTool, SIGNAL(triggered(bool)), this, SLOT(onMoveToolTriggered(bool)));
     connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));
