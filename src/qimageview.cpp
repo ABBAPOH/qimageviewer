@@ -754,7 +754,7 @@ bool QImageView::isModified() const
 {
     Q_D(const QImageView);
 
-    return d->undoStackIndex != d->undoStack->index();
+    return d->modified;
 }
 
 void QImageView::setModified(bool modified)
@@ -762,7 +762,7 @@ void QImageView::setModified(bool modified)
     Q_D(QImageView);
 
     if (modified)
-        d->undoStackIndex = 0;
+        d->undoStackIndex = -1; // we always have modified file
     else
         d->undoStackIndex = d->undoStack->index();
 
