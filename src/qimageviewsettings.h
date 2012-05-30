@@ -35,7 +35,7 @@ public:
 private:
     QImageViewSettingsPrivate *d_ptr;
 
-    friend class QSingleImageView;
+    friend class QImageView;
 };
 
 #endif // QIMAGEVIEWSETTINGS_H

@@ -2,7 +2,7 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH  *= $$PWD
 
 SOURCES += main.cpp\
-    qsingleimageview.cpp \
+    qimageview.cpp \
     mainwindow.cpp \
     qimageviewsettings.cpp \
     preferenceswidget.cpp \
@@ -10,8 +10,8 @@ SOURCES += main.cpp\
     src/qimageresizedialog.cpp
 
 HEADERS  += \
-    qsingleimageview.h \
-    qsingleimageview_p.h \
+    qimageview.h \
+    qimageview_p.h \
     mainwindow.h \
     qimageviewsettings.h \
     qimageviewsettings_p.h \

@@ -8,7 +8,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-#include "qsingleimageview.h"
+#include "qimageview.h"
 #include "qimageresizedialog.h"
 #include "qimageviewsettings.h"
 #include "preferenceswidget.h"
@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    m_view = new QSingleImageView(this);
+    m_view = new QImageView(this);
     setCentralWidget(m_view);
 
     m_toolGroup = new QActionGroup(this);
@@ -82,13 +82,13 @@ void MainWindow::saveAs()
 void MainWindow::onMoveToolTriggered(bool triggered)
 {
     if (triggered)
-        m_view->setMouseMode(QSingleImageView::MouseModeMove);
+        m_view->setMouseMode(QImageView::MouseModeMove);
 }
 
 void MainWindow::onSelectionToolTriggered(bool triggered)
 {
     if (triggered)
-        m_view->setMouseMode(QSingleImageView::MouseModeSelect);
+        m_view->setMouseMode(QImageView::MouseModeSelect);
 }
 
 void MainWindow::preferences()

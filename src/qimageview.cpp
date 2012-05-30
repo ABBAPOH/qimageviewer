@@ -1,5 +1,5 @@
-#include "qsingleimageview.h"
-#include "qsingleimageview_p.h"
+#include "qimageview.h"
+#include "qimageview_p.h"
 
 #include <QtGui/QApplication>
 #include <QtGui/QClipboard>
@@ -77,7 +77,7 @@ static QPoint containingPoint(QPoint pos, const QRect &rect)
     return pos;
 }
 
-ZoomAnimation::ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent) :
+ZoomAnimation::ZoomAnimation(QImageViewPrivate *dd, QObject *parent) :
     QVariantAnimation(parent),
     d(dd)
 {
@@ -88,7 +88,7 @@ void ZoomAnimation::updateCurrentValue(const QVariant &value)
     d->setVisualZoomFactor(value.toReal());
 }
 
-AxisAnimation::AxisAnimation(Qt::Axis axis, QSingleImageViewPrivate *dd, QObject *parent):
+AxisAnimation::AxisAnimation(Qt::Axis axis, QImageViewPrivate *dd, QObject *parent):
     QVariantAnimation(parent),
     d(dd),
     m_axis(axis)
@@ -100,13 +100,13 @@ void AxisAnimation::updateCurrentValue(const QVariant &/*value*/)
     d->updateViewport();
 }
 
-ImageViewCommand::ImageViewCommand(QSingleImageViewPrivate *dd) :
+ImageViewCommand::ImageViewCommand(QImageViewPrivate *dd) :
     QUndoCommand(),
     d(dd)
 {
 }
 
-RotateCommand::RotateCommand(bool left, QSingleImageViewPrivate *dd) :
+RotateCommand::RotateCommand(bool left, QImageViewPrivate *dd) :
     ImageViewCommand(dd),
     m_left(left)
 {
@@ -122,7 +122,7 @@ void RotateCommand::undo()
     d->rotate(!m_left);
 }
 
-HFlipCommand::HFlipCommand(QSingleImageViewPrivate *dd) :
+HFlipCommand::HFlipCommand(QImageViewPrivate *dd) :
     ImageViewCommand(dd)
 {
 }
@@ -137,7 +137,7 @@ void HFlipCommand::undo()
     d->flipHorizontally();
 }
 
-VFlipCommand::VFlipCommand(QSingleImageViewPrivate *dd) :
+VFlipCommand::VFlipCommand(QImageViewPrivate *dd) :
     ImageViewCommand(dd)
 {
 }
@@ -152,7 +152,7 @@ void VFlipCommand::undo()
     d->flipVertically();
 }
 
-CutCommand::CutCommand(const QRect &rect, QSingleImageViewPrivate *dd) :
+CutCommand::CutCommand(const QRect &rect, QImageViewPrivate *dd) :
     ImageViewCommand(dd),
     m_rect(rect)
 {
@@ -184,7 +184,7 @@ void CutCommand::undo()
     d->syncPixmap();
 }
 
-ResizeCommand::ResizeCommand(const QSize &size, QSingleImageViewPrivate *dd) :
+ResizeCommand::ResizeCommand(const QSize &size, QImageViewPrivate *dd) :
     ImageViewCommand(dd),
     m_size(size)
 {
@@ -203,7 +203,7 @@ void ResizeCommand::undo()
     d->syncPixmap();
 }
 
-QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
+QImageViewPrivate::QImageViewPrivate(QImageView *qq) :
     currentImageNumber(-1),
     zoomFactor(1.0),
     visualZoomFactor(1.0),
@@ -215,10 +215,10 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     undoStackIndex(0),
     modified(0),
     listWidget(new QListWidget(qq)),
-    thumbnailsPosition(QSingleImageView::East),
+    thumbnailsPosition(QImageView::East),
     q_ptr(qq)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     listWidget->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     QPalette palette = listWidget->palette();
@@ -238,9 +238,9 @@ QSingleImageViewPrivate::QSingleImageViewPrivate(QSingleImageView *qq) :
     QObject::connect(undoStack, SIGNAL(indexChanged(int)), q, SLOT(undoIndexChanged(int)));
 }
 
-void QSingleImageViewPrivate::recreateViewport(bool useOpenGL)
+void QImageViewPrivate::recreateViewport(bool useOpenGL)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     if (useOpenGL) {
         QGLFormat glFormat(QGL::SampleBuffers); // antialiasing
@@ -251,9 +251,9 @@ void QSingleImageViewPrivate::recreateViewport(bool useOpenGL)
     }
 }
 
-void QSingleImageViewPrivate::setZoomFactor(qreal factor)
+void QImageViewPrivate::setZoomFactor(qreal factor)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     if (zoomFactor == factor)
         return;
@@ -278,16 +278,16 @@ void QSingleImageViewPrivate::setZoomFactor(qreal factor)
     zoomAnimation.start();
 }
 
-void QSingleImageViewPrivate::setVisualZoomFactor(qreal factor)
+void QImageViewPrivate::setVisualZoomFactor(qreal factor)
 {
     visualZoomFactor = factor;
 
     updateScrollBars();
 }
 
-void QSingleImageViewPrivate::setCanCopy(bool can)
+void QImageViewPrivate::setCanCopy(bool can)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     if (canCopy != can) {
         canCopy = can;
@@ -295,9 +295,9 @@ void QSingleImageViewPrivate::setCanCopy(bool can)
     }
 }
 
-void QSingleImageViewPrivate::setModified(bool m)
+void QImageViewPrivate::setModified(bool m)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     if (modified != m) {
         modified = m;
@@ -305,9 +305,9 @@ void QSingleImageViewPrivate::setModified(bool m)
     }
 }
 
-void QSingleImageViewPrivate::rotate(bool left)
+void QImageViewPrivate::rotate(bool left)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     QTransform matrix;
     matrix.rotate(left ? -90 : 90, Qt::ZAxis);
@@ -317,7 +317,7 @@ void QSingleImageViewPrivate::rotate(bool left)
     addAxisAnimation(Qt::ZAxis, left ? - 90.0 : 90.0, 150);
 }
 
-void QSingleImageViewPrivate::flipHorizontally()
+void QImageViewPrivate::flipHorizontally()
 {
     QTransform matrix;
     matrix.rotate(180, Qt::YAxis);
@@ -326,7 +326,7 @@ void QSingleImageViewPrivate::flipHorizontally()
     addAxisAnimation(Qt::YAxis, 180.0, 200);
 }
 
-void QSingleImageViewPrivate::flipVertically()
+void QImageViewPrivate::flipVertically()
 {
     QTransform matrix;
     matrix.rotate(180, Qt::XAxis);
@@ -335,9 +335,9 @@ void QSingleImageViewPrivate::flipVertically()
     addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
 
-void QSingleImageViewPrivate::updateScrollBars()
+void QImageViewPrivate::updateScrollBars()
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     QSize size = pixmap.size() * visualZoomFactor;
     int hmax = size.width() - q->viewport()->width();
@@ -352,20 +352,20 @@ void QSingleImageViewPrivate::updateScrollBars()
     q->viewport()->update();
 }
 
-void QSingleImageViewPrivate::updateViewport()
+void QImageViewPrivate::updateViewport()
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
     q->viewport()->update();
 }
 
-void QSingleImageViewPrivate::animationFinished()
+void QImageViewPrivate::animationFinished()
 {
     axisAnimationCount--;
     if (!axisAnimationCount)
         syncPixmap();
 }
 
-void QSingleImageViewPrivate::undoIndexChanged(int index)
+void QImageViewPrivate::undoIndexChanged(int index)
 {
     if (index == undoStackIndex)
         setModified(false);
@@ -373,9 +373,9 @@ void QSingleImageViewPrivate::undoIndexChanged(int index)
         setModified(true);
 }
 
-void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs)
+void QImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     AxisAnimation *animation = new AxisAnimation(axis, this, q);
     animation->setStartValue(0.0);
@@ -388,12 +388,12 @@ void QSingleImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, in
     QObject::connect(animation, SIGNAL(finished()), q, SLOT(animationFinished()));
 }
 
-bool QSingleImageViewPrivate::hasRunningAnimations() const
+bool QImageViewPrivate::hasRunningAnimations() const
 {
     return axisAnimationCount || (zoomAnimation.state() == QVariantAnimation::Running);
 }
 
-void QSingleImageViewPrivate::stopAnimations()
+void QImageViewPrivate::stopAnimations()
 {
     foreach (AxisAnimation *animation, runningAnimations) {
         animation->stop();
@@ -404,14 +404,14 @@ void QSingleImageViewPrivate::stopAnimations()
     axisAnimationCount = 0;
 }
 
-void QSingleImageViewPrivate::syncPixmap()
+void QImageViewPrivate::syncPixmap()
 {
     pixmap = QPixmap::fromImage(image);
 
     updateViewport();
 }
 
-void QSingleImageViewPrivate::setImage(const QImage &image)
+void QImageViewPrivate::setImage(const QImage &image)
 {
     this->image = image;
 
@@ -419,19 +419,19 @@ void QSingleImageViewPrivate::setImage(const QImage &image)
     syncPixmap();
 }
 
-void QSingleImageViewPrivate::updateThumbnailsState()
+void QImageViewPrivate::updateThumbnailsState()
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     switch (thumbnailsPosition) {
-    case QSingleImageView::North:
-    case QSingleImageView::South:
+    case QImageView::North:
+    case QImageView::South:
         listWidget->setFlow(QListView::LeftToRight);
         listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
         listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         break;
-    case QSingleImageView::West:
-    case QSingleImageView::East:
+    case QImageView::West:
+    case QImageView::East:
         listWidget->setFlow(QListView::TopToBottom);
         listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -443,10 +443,10 @@ void QSingleImageViewPrivate::updateThumbnailsState()
     if (q->imageCount() > 1) {
         QMargins margins(0, 0, 0, 0);
         switch (thumbnailsPosition) {
-        case QSingleImageView::North: margins.setTop(100); break;
-        case QSingleImageView::South: margins.setBottom(100); break;
-        case QSingleImageView::West: margins.setLeft(100); break;
-        case QSingleImageView::East: margins.setRight(100); break;
+        case QImageView::North: margins.setTop(100); break;
+        case QImageView::South: margins.setBottom(100); break;
+        case QImageView::West: margins.setLeft(100); break;
+        case QImageView::East: margins.setRight(100); break;
         default: break;
         }
         q->setViewportMargins(margins);
@@ -457,24 +457,24 @@ void QSingleImageViewPrivate::updateThumbnailsState()
     }
 }
 
-void QSingleImageViewPrivate::updateThumbnailsGeometry()
+void QImageViewPrivate::updateThumbnailsGeometry()
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
     QRect rect = q->rect();
     switch (thumbnailsPosition) {
-    case QSingleImageView::North: rect.setHeight(100); break;
-    case QSingleImageView::South: rect.setY(rect.y() + rect.height() - 100); break;
-    case QSingleImageView::West: rect.setWidth(100); break;
-    case QSingleImageView::East: rect.setX(rect.x() + rect.width() - 100); break;
+    case QImageView::North: rect.setHeight(100); break;
+    case QImageView::South: rect.setY(rect.y() + rect.height() - 100); break;
+    case QImageView::West: rect.setWidth(100); break;
+    case QImageView::East: rect.setX(rect.x() + rect.width() - 100); break;
     default: break;
     }
     listWidget->setGeometry(rect);
 }
 
-QPointF QSingleImageViewPrivate::getCenter() const
+QPointF QImageViewPrivate::getCenter() const
 {
-    Q_Q(const QSingleImageView);
+    Q_Q(const QImageView);
 
     int hvalue = q->horizontalScrollBar()->value();
     int vvalue = q->verticalScrollBar()->value();
@@ -484,7 +484,7 @@ QPointF QSingleImageViewPrivate::getCenter() const
     return QPointF(size.width(), size.height());
 }
 
-QRect QSingleImageViewPrivate::selectedImageRect() const
+QRect QImageViewPrivate::selectedImageRect() const
 {
     if (startPos == pos)
         return QRect();
@@ -506,9 +506,9 @@ QRect QSingleImageViewPrivate::selectedImageRect() const
     return result;
 }
 
-qreal QSingleImageViewPrivate::getFitInViewFactor() const
+qreal QImageViewPrivate::getFitInViewFactor() const
 {
-    Q_Q(const QSingleImageView);
+    Q_Q(const QImageView);
 
     QSize imageSize = image.size();
     if (imageSize.isEmpty())
@@ -533,7 +533,7 @@ qreal QSingleImageViewPrivate::getFitInViewFactor() const
     return factor;
 }
 
-void QSingleImageViewPrivate::drawBackground(QPainter *p)
+void QImageViewPrivate::drawBackground(QPainter *p)
 {
     QImageViewSettings *settings = QImageViewSettings::globalSettings();
 
@@ -556,11 +556,11 @@ void QSingleImageViewPrivate::drawBackground(QPainter *p)
     }
 }
 
-void QSingleImageViewPrivate::drawSelection(QPainter *p)
+void QImageViewPrivate::drawSelection(QPainter *p)
 {
-    Q_Q(QSingleImageView);
+    Q_Q(QImageView);
 
-    if (mouseMode != QSingleImageView::MouseModeSelect)
+    if (mouseMode != QImageView::MouseModeSelect)
         return;
 
     if (startPos == pos)
@@ -592,7 +592,7 @@ void QSingleImageViewPrivate::drawSelection(QPainter *p)
     p->setPen(QPen(Qt::black, 1, Qt::DashLine, Qt::RoundCap));
     p->drawRect(imageSelectionRect);
 
-    QString text = QSingleImageView::tr("%1 x %2").
+    QString text = QImageView::tr("%1 x %2").
             arg(abs(imageSelectionRect.width()/visualZoomFactor)).
             arg(abs(imageSelectionRect.height()/visualZoomFactor));
 
@@ -611,11 +611,11 @@ void QSingleImageViewPrivate::drawSelection(QPainter *p)
     p->drawText(textPos, text);
 }
 
-QSingleImageView::QSingleImageView(QWidget *parent) :
+QImageView::QImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
-    d_ptr(new QSingleImageViewPrivate(this))
+    d_ptr(new QImageViewPrivate(this))
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
 
@@ -634,43 +634,43 @@ QSingleImageView::QSingleImageView(QWidget *parent) :
     d->updateThumbnailsState();
 }
 
-QSingleImageView::~QSingleImageView()
+QImageView::~QImageView()
 {
     QImageViewSettings::globalSettings()->d_func()->removeView(this);
     delete d_ptr;
 }
 
-bool QSingleImageView::canCopy() const
+bool QImageView::canCopy() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->canCopy;
 }
 
-bool QSingleImageView::canRedo() const
+bool QImageView::canRedo() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->undoStack->canRedo();
 }
 
-bool QSingleImageView::canUndo() const
+bool QImageView::canUndo() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->undoStack->canUndo();
 }
 
-void QSingleImageView::read(QIODevice *device, const QByteArray &format)
+void QImageView::read(QIODevice *device, const QByteArray &format)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->images.clear();
     d->listWidget->clear();
 
     QImageReader reader(device, format);
     for (int i = 0; i < reader.imageCount(); ++i) {
-        QSingleImageViewPrivate::ImageData data;
+        QImageViewPrivate::ImageData data;
         data.image = reader.read();
         data.nextImageDelay = reader.nextImageDelay();
         d->images.append(data);
@@ -694,24 +694,24 @@ void QSingleImageView::read(QIODevice *device, const QByteArray &format)
     viewport()->update();
 }
 
-void QSingleImageView::write(QIODevice *device, const QByteArray &format)
+void QImageView::write(QIODevice *device, const QByteArray &format)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     QImageWriter writer(device, format);
     writer.write(d->image);
 }
 
-QImage QSingleImageView::image() const
+QImage QImageView::image() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->image;
 }
 
-void QSingleImageView::setImage(const QImage &image)
+void QImageView::setImage(const QImage &image)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->images.clear();
 
@@ -725,7 +725,7 @@ void QSingleImageView::setImage(const QImage &image)
     }
 
     d->setImage(image);
-    QSingleImageViewPrivate::ImageData data;
+    QImageViewPrivate::ImageData data;
     data.image = image;
     data.nextImageDelay = 0;
     d->images.append(data);
@@ -736,30 +736,30 @@ void QSingleImageView::setImage(const QImage &image)
     viewport()->update();
 }
 
-int QSingleImageView::currentImageNumber() const
+int QImageView::currentImageNumber() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->currentImageNumber;
 }
 
-int QSingleImageView::imageCount() const
+int QImageView::imageCount() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->images.count();
 }
 
-bool QSingleImageView::isModified() const
+bool QImageView::isModified() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->undoStackIndex != d->undoStack->index();
 }
 
-void QSingleImageView::setModified(bool modified)
+void QImageView::setModified(bool modified)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (modified)
         d->undoStackIndex = 0;
@@ -769,16 +769,16 @@ void QSingleImageView::setModified(bool modified)
     d->setModified(modified);
 }
 
-QSingleImageView::MouseMode QSingleImageView::mouseMode() const
+QImageView::MouseMode QImageView::mouseMode() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->mouseMode;
 }
 
-void QSingleImageView::setMouseMode(QSingleImageView::MouseMode mode)
+void QImageView::setMouseMode(QImageView::MouseMode mode)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (d->mouseMode != mode) {
         if (mode == MouseModeMove)
@@ -793,30 +793,30 @@ void QSingleImageView::setMouseMode(QSingleImageView::MouseMode mode)
     }
 }
 
-QRect QSingleImageView::selectedImageRect() const
+QRect QImageView::selectedImageRect() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->selectedImageRect();
 }
 
-QImage QSingleImageView::selectedImage() const
+QImage QImageView::selectedImage() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->image.copy(selectedImageRect());
 }
 
-QSingleImageView::Position QSingleImageView::thumbnailsPosition() const
+QImageView::Position QImageView::thumbnailsPosition() const
 {
-    Q_D(const QSingleImageView);
+    Q_D(const QImageView);
 
     return d->thumbnailsPosition;
 }
 
-void QSingleImageView::setThumbnailsPosition(QSingleImageView::Position position)
+void QImageView::setThumbnailsPosition(QImageView::Position position)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (d->thumbnailsPosition == position)
         return;
@@ -825,23 +825,23 @@ void QSingleImageView::setThumbnailsPosition(QSingleImageView::Position position
     d->updateThumbnailsState();
 }
 
-void QSingleImageView::zoomIn()
+void QImageView::zoomIn()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->setZoomFactor(d->zoomFactor*1.2);
 }
 
-void QSingleImageView::zoomOut()
+void QImageView::zoomOut()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->setZoomFactor(d->zoomFactor*0.8);
 }
 
-void QSingleImageView::bestFit()
+void QImageView::bestFit()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (d->image.isNull())
         return;
@@ -851,9 +851,9 @@ void QSingleImageView::bestFit()
     d->setZoomFactor(factor);
 }
 
-void QSingleImageView::fitInView()
+void QImageView::fitInView()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (d->image.isNull())
         return;
@@ -862,16 +862,16 @@ void QSingleImageView::fitInView()
     d->setZoomFactor(factor);
 }
 
-void QSingleImageView::normalSize()
+void QImageView::normalSize()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->setZoomFactor(1.0);
 }
 
-void QSingleImageView::jumpToImage(int imageNumber)
+void QImageView::jumpToImage(int imageNumber)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (d->currentImageNumber == imageNumber)
         return;
@@ -881,7 +881,7 @@ void QSingleImageView::jumpToImage(int imageNumber)
     d->setImage(d->images.at(imageNumber).image);
 }
 
-void QSingleImageView::nextImage()
+void QImageView::nextImage()
 {
     int count = imageCount();
     if (!count)
@@ -890,7 +890,7 @@ void QSingleImageView::nextImage()
     jumpToImage((currentImageNumber() + 1) % count);
 }
 
-void QSingleImageView::prevImage()
+void QImageView::prevImage()
 {
     int count = imageCount();
     if (!count)
@@ -899,9 +899,9 @@ void QSingleImageView::prevImage()
     jumpToImage((currentImageNumber() - 1 + count) % count);
 }
 
-void QSingleImageView::resizeImage(const QSize &size)
+void QImageView::resizeImage(const QSize &size)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     if (size.isEmpty())
         return;
@@ -909,44 +909,44 @@ void QSingleImageView::resizeImage(const QSize &size)
     d->undoStack->push(new ResizeCommand(size, d));
 }
 
-void QSingleImageView::rotateLeft()
+void QImageView::rotateLeft()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->undoStack->push(new RotateCommand(true, d));
 }
 
-void QSingleImageView::rotateRight()
+void QImageView::rotateRight()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->undoStack->push(new RotateCommand(false, d));
 }
 
-void QSingleImageView::flipHorizontally()
+void QImageView::flipHorizontally()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->undoStack->push(new HFlipCommand(d));
 }
 
-void QSingleImageView::flipVertically()
+void QImageView::flipVertically()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->undoStack->push(new VFlipCommand(d));
 }
 
-void QSingleImageView::clearSelection()
+void QImageView::clearSelection()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->startPos = d->pos = QPoint();
     d->setCanCopy(false);
     viewport()->update();
 }
 
-void QSingleImageView::copy()
+void QImageView::copy()
 {
     QImage image = selectedImage();
 
@@ -955,32 +955,32 @@ void QSingleImageView::copy()
     clipboard->setImage(image);
 }
 
-void QSingleImageView::cut()
+void QImageView::cut()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     copy();
 
     d->undoStack->push(new CutCommand(selectedImageRect(), d));
 }
 
-void QSingleImageView::redo()
+void QImageView::redo()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->undoStack->redo();
 }
 
-void QSingleImageView::undo()
+void QImageView::undo()
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->undoStack->undo();
 }
 
-void QSingleImageView::mousePressEvent(QMouseEvent *e)
+void QImageView::mousePressEvent(QMouseEvent *e)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->mousePressed = true;
     d->startPos = e->pos();
@@ -995,9 +995,9 @@ void QSingleImageView::mousePressEvent(QMouseEvent *e)
     viewport()->update();
 }
 
-void QSingleImageView::mouseMoveEvent(QMouseEvent *e)
+void QImageView::mouseMoveEvent(QMouseEvent *e)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     QPoint pos = e->pos();
 
@@ -1017,9 +1017,9 @@ void QSingleImageView::mouseMoveEvent(QMouseEvent *e)
     viewport()->update();
 }
 
-void QSingleImageView::mouseReleaseEvent(QMouseEvent *)
+void QImageView::mouseReleaseEvent(QMouseEvent *)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->prevPos = QPoint();
 
@@ -1030,7 +1030,7 @@ void QSingleImageView::mouseReleaseEvent(QMouseEvent *)
     viewport()->update();
 }
 
-void QSingleImageView::keyPressEvent(QKeyEvent *e)
+void QImageView::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {
     case Qt::Key_Escape :
@@ -1049,9 +1049,9 @@ void QSingleImageView::keyPressEvent(QKeyEvent *e)
     QAbstractScrollArea::keyPressEvent(e);
 }
 
-void QSingleImageView::paintEvent(QPaintEvent *)
+void QImageView::paintEvent(QPaintEvent *)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     QPainter p(viewport());
     if (!d->hasRunningAnimations())
@@ -1096,18 +1096,18 @@ void QSingleImageView::paintEvent(QPaintEvent *)
     d->drawSelection(&p);
 }
 
-void QSingleImageView::resizeEvent(QResizeEvent *)
+void QImageView::resizeEvent(QResizeEvent *)
 {
-    Q_D(QSingleImageView);
+    Q_D(QImageView);
 
     d->updateThumbnailsGeometry();
 }
 
-bool QSingleImageView::viewportEvent(QEvent *e)
+bool QImageView::viewportEvent(QEvent *e)
 {
     switch (e->type()) {
     case QEvent::Resize : {
-        Q_D(QSingleImageView);
+        Q_D(QImageView);
 
         d->updateScrollBars();
     }
@@ -1118,4 +1118,4 @@ bool QSingleImageView::viewportEvent(QEvent *e)
     return QAbstractScrollArea::viewportEvent(e);
 }
 
-#include "moc_qsingleimageview.cpp"
+#include "moc_qimageview.cpp"

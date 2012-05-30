@@ -1,7 +1,7 @@
-#ifndef QSINGLEIMAGEVIEW_P_H
-#define QSINGLEIMAGEVIEW_P_H
+#ifndef QIMAGEVIEW_P_H
+#define QIMAGEVIEW_P_H
 
-#include "qsingleimageview.h"
+#include "qimageview.h"
 
 #include <QtCore/QVariantAnimation>
 #include <QtGui/QUndoCommand>
@@ -13,13 +13,13 @@ class ZoomAnimation : public QVariantAnimation
 {
     Q_OBJECT
 public:
-    explicit ZoomAnimation(QSingleImageViewPrivate *dd, QObject *parent = 0);
+    explicit ZoomAnimation(QImageViewPrivate *dd, QObject *parent = 0);
 
 protected:
     void updateCurrentValue(const QVariant &value);
 
 private:
-    QSingleImageViewPrivate *d;
+    QImageViewPrivate *d;
 };
 
 class AxisAnimation : public QVariantAnimation
@@ -27,7 +27,7 @@ class AxisAnimation : public QVariantAnimation
     Q_OBJECT
 
 public:
-    explicit AxisAnimation(Qt::Axis axis, QSingleImageViewPrivate *dd, QObject *parent = 0);
+    explicit AxisAnimation(Qt::Axis axis, QImageViewPrivate *dd, QObject *parent = 0);
 
     Qt::Axis axis() const { return m_axis; }
     qreal angle() const { return currentValue().toReal(); }
@@ -36,7 +36,7 @@ protected:
     void updateCurrentValue(const QVariant &value);
 
 private:
-    QSingleImageViewPrivate *d;
+    QImageViewPrivate *d;
     Qt::Axis m_axis;
 };
 
@@ -44,16 +44,16 @@ private:
 class ImageViewCommand : public QUndoCommand
 {
 public:
-    explicit ImageViewCommand(QSingleImageViewPrivate *dd);
+    explicit ImageViewCommand(QImageViewPrivate *dd);
 
 protected:
-    QSingleImageViewPrivate *d;
+    QImageViewPrivate *d;
 };
 
 class RotateCommand : public ImageViewCommand
 {
 public:
-    explicit RotateCommand(bool left, QSingleImageViewPrivate *dd);
+    explicit RotateCommand(bool left, QImageViewPrivate *dd);
 
     void redo();
     void undo();
@@ -65,7 +65,7 @@ private:
 class HFlipCommand : public ImageViewCommand
 {
 public:
-    explicit HFlipCommand(QSingleImageViewPrivate *dd);
+    explicit HFlipCommand(QImageViewPrivate *dd);
 
     void redo();
     void undo();
@@ -74,7 +74,7 @@ public:
 class VFlipCommand : public ImageViewCommand
 {
 public:
-    explicit VFlipCommand(QSingleImageViewPrivate *dd);
+    explicit VFlipCommand(QImageViewPrivate *dd);
 
     void redo();
     void undo();
@@ -83,7 +83,7 @@ public:
 class CutCommand : public ImageViewCommand
 {
 public:
-    explicit CutCommand(const QRect &rect, QSingleImageViewPrivate *dd);
+    explicit CutCommand(const QRect &rect, QImageViewPrivate *dd);
 
     void redo();
     void undo();
@@ -96,7 +96,7 @@ private:
 class ResizeCommand : public ImageViewCommand
 {
 public:
-    explicit ResizeCommand(const QSize &size, QSingleImageViewPrivate *dd);
+    explicit ResizeCommand(const QSize &size, QImageViewPrivate *dd);
 
     void redo();
     void undo();
@@ -106,12 +106,12 @@ private:
     QImage m_image;
 };
 
-class QSingleImageViewPrivate
+class QImageViewPrivate
 {
-    Q_DECLARE_PUBLIC(QSingleImageView)
+    Q_DECLARE_PUBLIC(QImageView)
 
 public:
-    explicit QSingleImageViewPrivate(QSingleImageView *qq);
+    explicit QImageViewPrivate(QImageView *qq);
 
     void recreateViewport(bool useOpenGL);
 
@@ -156,7 +156,7 @@ public:
     QList<ImageData> images;
     int currentImageNumber;
     QImage image;
-    QSingleImageView::MouseMode mouseMode;
+    QImageView::MouseMode mouseMode;
 
     QPixmap pixmap;
 
@@ -179,10 +179,10 @@ public:
     bool modified;
 
     QListWidget *listWidget;
-    QSingleImageView::Position thumbnailsPosition;
+    QImageView::Position thumbnailsPosition;
 
 private:
-    QSingleImageView *q_ptr;
+    QImageView *q_ptr;
 };
 
-#endif // QSINGLEIMAGEVIEW_P_H
+#endif // QIMAGEVIEW_P_H

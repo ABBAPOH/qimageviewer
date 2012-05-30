@@ -3,16 +3,16 @@
 
 #include <QApplication>
 
-#include "qsingleimageview.h"
-#include "qsingleimageview_p.h"
+#include "qimageview.h"
+#include "qimageview_p.h"
 
-void QImageViewSettingsPrivate::addView(QSingleImageView *view)
+void QImageViewSettingsPrivate::addView(QImageView *view)
 {
     Q_ASSERT(!views.contains(view));
     views.append(view);
 }
 
-void QImageViewSettingsPrivate::removeView(QSingleImageView *view)
+void QImageViewSettingsPrivate::removeView(QImageView *view)
 {
     Q_ASSERT(views.contains(view));
     views.removeOne(view);
@@ -20,7 +20,7 @@ void QImageViewSettingsPrivate::removeView(QSingleImageView *view)
 
 void QImageViewSettingsPrivate::updateViews()
 {
-    foreach (QSingleImageView *view, views) {
+    foreach (QImageView *view, views) {
         view->viewport()->update();
     }
 }
@@ -110,7 +110,7 @@ void QImageViewSettings::setUseOpenGL(bool yes)
     if (d->useOpenGL != yes) {
         d->useOpenGL = yes;
 
-        foreach (QSingleImageView *view, d->views) {
+        foreach (QImageView *view, d->views) {
             view->d_func()->recreateViewport(d->useOpenGL);
         }
 

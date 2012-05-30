@@ -8,7 +8,7 @@ class MainWindow;
 }
 
 class QActionGroup;
-class QSingleImageView;
+class QImageView;
 
 class MainWindow : public QMainWindow
 {
@@ -40,7 +40,7 @@ private:
 
 private:
     Ui::MainWindow *ui;
-    QSingleImageView *m_view;
+    QImageView *m_view;
     QString m_file;
     QActionGroup *m_toolGroup;
 };

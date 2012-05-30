@@ -3,13 +3,13 @@
 
 #include "qimageviewsettings.h"
 
-class QSingleImageView;
+class QImageView;
 
 class QImageViewSettingsPrivate
 {
 public:
-    void addView(QSingleImageView *view);
-    void removeView(QSingleImageView *view);
+    void addView(QImageView *view);
+    void removeView(QImageView *view);
 
     void updateViews();
 
@@ -20,7 +20,7 @@ public:
     bool useOpenGL;
 
 private:
-    QList<QSingleImageView *> views;
+    QList<QImageView *> views;
 
     friend class QImageViewSettings;
 };

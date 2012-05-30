@@ -1,13 +1,13 @@
-#ifndef QSINGLEIMAGEVIEW_H
-#define QSINGLEIMAGEVIEW_H
+#ifndef QIMAGEVIEW_H
+#define QIMAGEVIEW_H
 
 #include <QAbstractScrollArea>
 
-class QSingleImageViewPrivate;
-class QSingleImageView : public QAbstractScrollArea
+class QImageViewPrivate;
+class QImageView : public QAbstractScrollArea
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(QSingleImageView)
+    Q_DECLARE_PRIVATE(QImageView)
 
     Q_PROPERTY(MouseMode mouseMode READ mouseMode WRITE setMouseMode NOTIFY mouseModeChanged)
     Q_PROPERTY(bool canCopy READ canRedo NOTIFY canCopyChanged)
@@ -30,8 +30,8 @@ public:
     };
     Q_ENUMS(Position)
 
-    explicit QSingleImageView(QWidget *parent = 0);
-    ~QSingleImageView();
+    explicit QImageView(QWidget *parent = 0);
+    ~QImageView();
 
     bool canCopy() const;
 
@@ -105,7 +105,7 @@ protected:
     bool viewportEvent(QEvent *);
 
 protected:
-    QSingleImageViewPrivate *d_ptr;
+    QImageViewPrivate *d_ptr;
 
     friend class QImageViewSettings;
 
@@ -114,4 +114,4 @@ protected:
     Q_PRIVATE_SLOT(d_func(), void undoIndexChanged(int))
 };
 
-#endif // QSINGLEIMAGEVIEW_H
+#endif // QIMAGEVIEW_H
