@@ -18,27 +18,30 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-private slots:
+public slots:
     void about();
 
     void open();
+    static void open(const QString &file);
+    static void open(const QStringList &files);
     void save();
     void saveAs();
 
     void onMoveToolTriggered(bool);
     void onSelectionToolTriggered(bool);
 
-    void preferences();
+    static void preferences();
 
     void resizeImage();
 
     void updateSaveActions();
 
+    void showWelcomeWindow();
+
 private:
     void setupConnections();
 
-    void loadSettings();
-    void saveSettings();
+    void setFile(const QString &file);
 
 private:
     Ui::MainWindow *ui;

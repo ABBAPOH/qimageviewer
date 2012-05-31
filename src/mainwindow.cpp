@@ -3,7 +3,6 @@
 
 #include <QDebug>
 #include <QPointer>
-#include <QSettings>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -12,6 +11,7 @@
 #include "qimageresizedialog.h"
 #include "qimageviewsettings.h"
 #include "preferenceswidget.h"
+#include "welcomewindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -29,14 +29,11 @@ MainWindow::MainWindow(QWidget *parent) :
     setupConnections();
 
     resize(800, 600);
-    loadSettings();
-
-    m_view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
+//    m_view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
 }
 
 MainWindow::~MainWindow()
 {
-    saveSettings();
     delete ui;
 }
 
@@ -52,15 +49,26 @@ void MainWindow::about()
 
 void MainWindow::open()
 {
-    QString file = QFileDialog::getOpenFileName(this);
-    if (file.isEmpty())
+    QStringList files = QFileDialog::getOpenFileNames(this);
+    if (files.isEmpty())
         return;
 
-    m_file = file;
-    QFile *f = new QFile(file);
-    if (!f->open(QFile::ReadOnly))
-        qWarning() << "Can't open file" << file;
-    m_view->read(f);
+    MainWindow::open(files);
+}
+
+void MainWindow::open(const QString &file)
+{
+    MainWindow *window = new MainWindow;
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    window->show();
+    window->setFile(file);
+}
+
+void MainWindow::open(const QStringList &files)
+{
+    foreach (const QString &file, files) {
+        open(file);
+    }
 }
 
 void MainWindow::save()
@@ -126,6 +134,11 @@ void MainWindow::updateSaveActions()
     ui->actionSaveAs->setEnabled(canSaveAs);
 }
 
+void MainWindow::showWelcomeWindow()
+{
+    WelcomeWindow::showWelcomeWindow();
+}
+
 void MainWindow::setupConnections()
 {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
@@ -169,35 +182,17 @@ void MainWindow::setupConnections()
     connect(ui->actionFlipHorizontally, SIGNAL(triggered()), m_view, SLOT(flipHorizontally()));
     connect(ui->actionFlipVertically, SIGNAL(triggered()), m_view, SLOT(flipVertically()));
 
+    connect(ui->actionShowWelcomeWindow, SIGNAL(triggered()), this, SLOT(showWelcomeWindow()));
+
     connect(ui->actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 }
 
-void MainWindow::loadSettings()
+void MainWindow::setFile(const QString &file)
 {
-    QSettings settings;
-    settings.beginGroup("Image Viewer");
-    QImageViewSettings *imageSettings = QImageViewSettings::globalSettings();
-
-    int type = settings.value("image background type", QImageViewSettings::None).toInt();
-    QColor imageColor = settings.value("image background color", QColor(255, 255, 255)).value<QColor>();
-    QColor backgroundColor = settings.value("background color", QColor(128, 128, 128)).value<QColor>();
-    bool useOpenGL = settings.value("use OpenGL", false).toBool();
-
-    imageSettings->setiImageBackgroundType(QImageViewSettings::ImageBackgroundType(type));
-    imageSettings->setImageBackgroundColor(imageColor);
-    imageSettings->setBackgroundColor(backgroundColor);
-    imageSettings->setUseOpenGL(useOpenGL);
-}
-
-void MainWindow::saveSettings()
-{
-    QSettings settings;
-    settings.beginGroup("Image Viewer");
-    QImageViewSettings *imageSettings = QImageViewSettings::globalSettings();
-
-    settings.setValue("image background type", (int)imageSettings->imageBackgroundType());
-    settings.setValue("image background color", imageSettings->imageBackgroundColor());
-    settings.setValue("background color", imageSettings->backgroundColor());
-    settings.setValue("use OpenGL", imageSettings->useOpenGL());
+    m_file = file;
+    QFile *f = new QFile(file);
+    if (!f->open(QFile::ReadOnly))
+        qWarning() << "Can't open file" << file;
+    m_view->read(f);
 }
