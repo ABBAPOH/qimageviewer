@@ -38,6 +38,9 @@ public slots:
 
     void showWelcomeWindow();
 
+protected:
+    void closeEvent(QCloseEvent *);
+
 private:
     void setupConnections();
 

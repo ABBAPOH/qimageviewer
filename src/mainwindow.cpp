@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QPointer>
 
+#include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -137,6 +138,45 @@ void MainWindow::updateSaveActions()
 void MainWindow::showWelcomeWindow()
 {
     WelcomeWindow::showWelcomeWindow();
+}
+
+void MainWindow::closeEvent(QCloseEvent *e)
+{
+    // TODO: add auto saving on quit
+    if (!m_view->isModified())
+        return;
+
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Save"));
+    msgBox.setText(tr("File has been modified. Would you like to save it?"));
+    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Discard);
+    msgBox.setWindowModality(Qt::WindowModal);
+    int button = msgBox.exec();
+
+    switch (button) {
+    case QMessageBox::Save: {
+        if (m_file.isEmpty())
+            saveAs();
+        else
+            save();
+
+        if (m_view->isModified())
+            e->ignore();
+        else
+            e->accept();
+        break;
+    }
+    case QMessageBox::Cancel: {
+        e->ignore();
+        break;
+    }
+    case QMessageBox::Discard: {
+        e->accept();
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void MainWindow::setupConnections()
