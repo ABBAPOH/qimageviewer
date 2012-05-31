@@ -67,6 +67,16 @@ void MainWindow::open(const QString &file)
 
 void MainWindow::open(const QStringList &files)
 {
+    if (files.count() > 10) {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(tr("Open"));
+        msgBox.setText(tr("You are opening %1 files. Would you like to continue?").arg(files.count()));
+        msgBox.setInformativeText(tr("Opening large amount of files can cause drop in performance"));
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        if (msgBox.exec() == QMessageBox::No)
+            return;
+    }
+
     foreach (const QString &file, files) {
         open(file);
     }
