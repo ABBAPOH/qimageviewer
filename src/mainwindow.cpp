@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_toolGroup->setExclusive(true);
     m_toolGroup->addAction(ui->actionMoveTool);
     m_toolGroup->addAction(ui->actionSelectionTool);
-    ui->menubar->addMenu(new WindowsMenu(ui->menubar));
+    ui->menubar->insertMenu(ui->menuHelp->menuAction(), new WindowsMenu(ui->menubar));
 
     setupConnections();
 
