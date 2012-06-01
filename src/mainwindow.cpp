@@ -13,6 +13,7 @@
 #include "qimageviewsettings.h"
 #include "preferenceswidget.h"
 #include "welcomewindow.h"
+#include "windowsmenu.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -26,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_toolGroup->setExclusive(true);
     m_toolGroup->addAction(ui->actionMoveTool);
     m_toolGroup->addAction(ui->actionSelectionTool);
+    ui->menubar->addMenu(new WindowsMenu(ui->menubar));
 
     setupConnections();
 
