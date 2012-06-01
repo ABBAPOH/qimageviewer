@@ -20,4 +20,10 @@ win32 {
 
 macx-* {
   ICON = src/icons/qimageviewer.icns
+  QMAKE_BUNDLE_DATA += FILETYPES
+  info.input = Info.plist.in
+  info.output = $$OUT_PWD/QImageViewer.app/Contents/Info.plist
+  QMAKE_SUBSTITUTES = info
 }
+
+OTHER_FILES += Info.plist.in

@@ -23,6 +23,9 @@ public slots:
     void quit();
     static void showWelcomeWindow();
 
+protected:
+    bool eventFilter(QObject *, QEvent *);
+
 private:
     void loadSettings();
     void saveSettings();
