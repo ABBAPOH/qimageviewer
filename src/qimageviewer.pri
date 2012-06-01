@@ -9,7 +9,8 @@ SOURCES += main.cpp\
     qcolorbutton.cpp \
     qimageresizedialog.cpp \
     welcomewindow.cpp \
-    windowsmenu.cpp
+    windowsmenu.cpp \
+    src/application.cpp
 
 HEADERS  += \
     qimageview.h \
@@ -22,7 +23,8 @@ HEADERS  += \
     qcolorbutton_p.h \
     qimageresizedialog.h \
     welcomewindow.h \
-    windowsmenu.h
+    windowsmenu.h \
+    src/application.h
 
 FORMS += \
     mainwindow.ui \

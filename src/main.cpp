@@ -1,12 +1,12 @@
-#include <QApplication>
 #include <QUrl>
 
+#include "application.h"
 #include "mainwindow.h"
 #include "welcomewindow.h"
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    Application app(argc, argv);
 
     QStringList files;
     foreach (const QString &argument, app.arguments().mid(1)) {

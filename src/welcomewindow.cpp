@@ -10,7 +10,6 @@
 
 #include "mainwindow.h"
 #include "qimageviewsettings.h"
-#include <QFileOpenEvent>
 
 WelcomeWindow *m_window = 0;
 
@@ -26,7 +25,6 @@ WelcomeWindow::WelcomeWindow(QWidget *parent) :
 
     m_window = this;
     loadSettings();
-    qApp->installEventFilter(this);
 }
 
 WelcomeWindow::~WelcomeWindow()
@@ -68,16 +66,6 @@ void WelcomeWindow::showWelcomeWindow()
         m_window->raise();
         m_window->activateWindow();
     }
-}
-
-bool WelcomeWindow::eventFilter(QObject *o, QEvent *e)
-{
-    if (e->type() == QEvent::FileOpen) {
-        QFileOpenEvent *foe = static_cast<QFileOpenEvent*>(e);
-        MainWindow::open(foe->url().toLocalFile());
-        return true;
-    }
-    return QWidget::eventFilter(o, e);
 }
 
 void WelcomeWindow::loadSettings()
