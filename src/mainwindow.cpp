@@ -19,8 +19,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    m_view = new QImageView(this);
-    setCentralWidget(m_view);
 
     m_toolGroup = new QActionGroup(this);
     m_toolGroup->setExclusive(true);
@@ -31,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     setupConnections();
 
     resize(800, 600);
-//    m_view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
+//    ui->view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
 }
 
 MainWindow::~MainWindow()
@@ -55,7 +53,7 @@ void MainWindow::open()
     if (files.isEmpty())
         return;
 
-    if (m_view->image().isNull()) {
+    if (ui->view->image().isNull()) {
         open(files.first());
         files = files.mid(1);
         if (!files.isEmpty())
@@ -71,7 +69,7 @@ void MainWindow::open(const QString &file)
     QFile *f = new QFile(file);
     if (!f->open(QFile::ReadOnly))
         qWarning() << "Can't open file" << file;
-    m_view->read(f);
+    ui->view->read(f);
 }
 
 void MainWindow::openWindow(const QString &file)
@@ -109,9 +107,9 @@ void MainWindow::newWindow()
 void MainWindow::save()
 {
     QFile f(m_file);
-    m_view->write(&f, QFileInfo(m_file).suffix().toUtf8());
-//    m_view->image().save(m_file);
-    m_view->setModified(false);
+    ui->view->write(&f, QFileInfo(m_file).suffix().toUtf8());
+//    ui->view->image().save(m_file);
+    ui->view->setModified(false);
 }
 
 void MainWindow::saveAs()
@@ -127,13 +125,13 @@ void MainWindow::saveAs()
 void MainWindow::onMoveToolTriggered(bool triggered)
 {
     if (triggered)
-        m_view->setMouseMode(QImageView::MouseModeMove);
+        ui->view->setMouseMode(QImageView::MouseModeMove);
 }
 
 void MainWindow::onSelectionToolTriggered(bool triggered)
 {
     if (triggered)
-        m_view->setMouseMode(QImageView::MouseModeSelect);
+        ui->view->setMouseMode(QImageView::MouseModeSelect);
 }
 
 void MainWindow::preferences()
@@ -154,16 +152,16 @@ void MainWindow::preferences()
 void MainWindow::resizeImage()
 {
     QImageResizeDialog d(this);
-    d.setImageSize(m_view->image().size());
+    d.setImageSize(ui->view->image().size());
     if (d.exec()) {
-        m_view->resizeImage(d.imageSize());
+        ui->view->resizeImage(d.imageSize());
     }
 }
 
 void MainWindow::updateSaveActions()
 {
-    bool canSaveAs = m_view->canWrite();
-    bool canSave = canSaveAs && m_view->isModified();
+    bool canSaveAs = ui->view->canWrite();
+    bool canSave = canSaveAs && ui->view->isModified();
 
     ui->actionSave->setEnabled(canSave);
     ui->actionSaveAs->setEnabled(canSaveAs);
@@ -172,7 +170,7 @@ void MainWindow::updateSaveActions()
 void MainWindow::closeEvent(QCloseEvent *e)
 {
     // TODO: add auto saving on quit
-    if (!m_view->isModified())
+    if (!ui->view->isModified())
         return;
 
     QMessageBox msgBox(this);
@@ -189,7 +187,7 @@ void MainWindow::closeEvent(QCloseEvent *e)
         else
             save();
 
-        if (m_view->isModified())
+        if (ui->view->isModified())
             e->ignore();
         else
             e->accept();
@@ -212,23 +210,23 @@ void MainWindow::setupConnections()
 {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
-    connect(m_view, SIGNAL(modifiedChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(ui->view, SIGNAL(modifiedChanged(bool)), this, SLOT(updateSaveActions()));
     connect(ui->actionSaveAs, SIGNAL(triggered()), this, SLOT(saveAs()));
 
     connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
 
-    connect(ui->actionRedo, SIGNAL(triggered()), m_view, SLOT(redo()));
-    connect(m_view, SIGNAL(canRedoChanged(bool)), ui->actionRedo, SLOT(setEnabled(bool)));
-    connect(ui->actionUndo, SIGNAL(triggered()), m_view, SLOT(undo()));
-    connect(m_view, SIGNAL(canUndoChanged(bool)), ui->actionUndo, SLOT(setEnabled(bool)));
+    connect(ui->actionRedo, SIGNAL(triggered()), ui->view, SLOT(redo()));
+    connect(ui->view, SIGNAL(canRedoChanged(bool)), ui->actionRedo, SLOT(setEnabled(bool)));
+    connect(ui->actionUndo, SIGNAL(triggered()), ui->view, SLOT(undo()));
+    connect(ui->view, SIGNAL(canUndoChanged(bool)), ui->actionUndo, SLOT(setEnabled(bool)));
 
-    connect(ui->actionCopy, SIGNAL(triggered()), m_view, SLOT(copy()));
-    connect(m_view, SIGNAL(canCopyChanged(bool)), ui->actionCopy, SLOT(setEnabled(bool)));
-    connect(ui->actionCut, SIGNAL(triggered()), m_view, SLOT(cut()));
-    connect(m_view, SIGNAL(canCopyChanged(bool)), ui->actionCut, SLOT(setEnabled(bool)));
+    connect(ui->actionCopy, SIGNAL(triggered()), ui->view, SLOT(copy()));
+    connect(ui->view, SIGNAL(canCopyChanged(bool)), ui->actionCopy, SLOT(setEnabled(bool)));
+    connect(ui->actionCut, SIGNAL(triggered()), ui->view, SLOT(cut()));
+    connect(ui->view, SIGNAL(canCopyChanged(bool)), ui->actionCut, SLOT(setEnabled(bool)));
 
-    connect(m_view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
-    connect(m_view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(ui->view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(ui->view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
 
     connect(ui->actionMoveTool, SIGNAL(triggered(bool)), this, SLOT(onMoveToolTriggered(bool)));
     connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));
@@ -237,19 +235,19 @@ void MainWindow::setupConnections()
 
     connect(ui->actionResizeImage, SIGNAL(triggered()), this, SLOT(resizeImage()));
 
-    connect(ui->actionZoomIn, SIGNAL(triggered()), m_view, SLOT(zoomIn()));
-    connect(ui->actionZoomOut, SIGNAL(triggered()), m_view, SLOT(zoomOut()));
-    connect(ui->actionNormalSize, SIGNAL(triggered()), m_view, SLOT(normalSize()));
-    connect(ui->actionFitInView, SIGNAL(triggered()), m_view, SLOT(fitInView()));
+    connect(ui->actionZoomIn, SIGNAL(triggered()), ui->view, SLOT(zoomIn()));
+    connect(ui->actionZoomOut, SIGNAL(triggered()), ui->view, SLOT(zoomOut()));
+    connect(ui->actionNormalSize, SIGNAL(triggered()), ui->view, SLOT(normalSize()));
+    connect(ui->actionFitInView, SIGNAL(triggered()), ui->view, SLOT(fitInView()));
 
-    connect(ui->actionPreviousImage, SIGNAL(triggered()), m_view, SLOT(prevImage()));
-    connect(ui->actionNextImage, SIGNAL(triggered()), m_view, SLOT(nextImage()));
+    connect(ui->actionPreviousImage, SIGNAL(triggered()), ui->view, SLOT(prevImage()));
+    connect(ui->actionNextImage, SIGNAL(triggered()), ui->view, SLOT(nextImage()));
 
-    connect(ui->actionRotateLeft, SIGNAL(triggered()), m_view, SLOT(rotateLeft()));
-    connect(ui->actionRotateRight, SIGNAL(triggered()), m_view, SLOT(rotateRight()));
+    connect(ui->actionRotateLeft, SIGNAL(triggered()), ui->view, SLOT(rotateLeft()));
+    connect(ui->actionRotateRight, SIGNAL(triggered()), ui->view, SLOT(rotateRight()));
 
-    connect(ui->actionFlipHorizontally, SIGNAL(triggered()), m_view, SLOT(flipHorizontally()));
-    connect(ui->actionFlipVertically, SIGNAL(triggered()), m_view, SLOT(flipVertically()));
+    connect(ui->actionFlipHorizontally, SIGNAL(triggered()), ui->view, SLOT(flipHorizontally()));
+    connect(ui->actionFlipVertically, SIGNAL(triggered()), ui->view, SLOT(flipVertically()));
 
     connect(ui->actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));

@@ -46,7 +46,6 @@ private:
 
 private:
     Ui::MainWindow *ui;
-    QImageView *m_view;
     QString m_file;
     QActionGroup *m_toolGroup;
 };

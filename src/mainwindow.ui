@@ -16,7 +16,7 @@
   <property name="unifiedTitleAndToolBarOnMac">
    <bool>true</bool>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QImageView" name="view"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -347,6 +347,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QImageView</class>
+   <extends>QWidget</extends>
+   <header>qimageview.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
