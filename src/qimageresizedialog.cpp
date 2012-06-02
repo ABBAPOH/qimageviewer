@@ -50,6 +50,7 @@ void QImageResizeDialog::widthChanged(int value)
     if (ui->saveProportions->isChecked()) {
         m_ignoreSignals = true;
         ui->height->setValue(value/factor());
+        m_currentSize.setHeight(ui->height->value());
         m_ignoreSignals = false;
     }
     ui->fitIn->setCurrentIndex(0);
@@ -66,6 +67,7 @@ void QImageResizeDialog::heightChanged(int value)
     if (ui->saveProportions->isChecked()) {
         m_ignoreSignals = true;
         ui->width->setValue(value*factor());
+        m_currentSize.setWidth(ui->width->value());
         m_ignoreSignals = false;
     }
     ui->fitIn->setCurrentIndex(0);
