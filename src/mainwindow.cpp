@@ -166,6 +166,8 @@ void MainWindow::updateSaveActions()
     actionSave->setEnabled(canSave);
     actionSaveAs->setEnabled(canSaveAs);
 
+    actionResize->setEnabled(!view->image().isNull());
+
     updateTitle();
 }
 
@@ -328,6 +330,7 @@ void MainWindow::setupToolsMenu()
 
     actionResize = new QAction(this);
     actionResize->setObjectName("actionResize");
+    actionResize->setEnabled(false);
     toolsMenu->addAction(actionResize);
 
     toolsMenu->addSeparator();
