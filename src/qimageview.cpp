@@ -658,12 +658,14 @@ void QImageViewPrivate::createActions()
     actions[QImageView::Copy] = new QAction(q);
     actions[QImageView::Copy]->setObjectName("actionCopy");
     actions[QImageView::Copy]->setShortcut(QKeySequence::Copy);
+    actions[QImageView::Copy]->setEnabled(false);
     q->connect(actions[QImageView::Copy], SIGNAL(triggered()), q, SLOT(copy()));
     q->connect(q, SIGNAL(canCopyChanged(bool)), actions[QImageView::Copy], SLOT(setEnabled(bool)));
 
     actions[QImageView::Cut] = new QAction(q);
     actions[QImageView::Cut]->setObjectName("actionCut");
     actions[QImageView::Cut]->setShortcut(QKeySequence::Cut);
+    actions[QImageView::Cut]->setEnabled(false);
     q->connect(actions[QImageView::Cut], SIGNAL(triggered()), q, SLOT(cut()));
     q->connect(q, SIGNAL(canCopyChanged(bool)), actions[QImageView::Cut], SLOT(setEnabled(bool)));
 
@@ -757,8 +759,10 @@ void QImageViewPrivate::updateActions()
 {
     bool enabled = !image.isNull();
 
-    actions[QImageView::Redo]->setEnabled(enabled);
-    actions[QImageView::Undo]->setEnabled(enabled);
+    if (!enabled) {
+        actions[QImageView::Redo]->setEnabled(false);
+        actions[QImageView::Undo]->setEnabled(false);
+    }
 
     actions[QImageView::ZoomIn]->setEnabled(enabled);
     actions[QImageView::ZoomOut]->setEnabled(enabled);
