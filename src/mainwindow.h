@@ -46,6 +46,7 @@ private:
     void setupHelpMenu();
     void setupConnections();
     void retranslateUi();
+    void updateTitle();
 
 private:
     QImageView *view;

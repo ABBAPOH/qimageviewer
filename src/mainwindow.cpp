@@ -71,7 +71,7 @@ void MainWindow::open(const QString &file)
         qWarning() << "Can't open file" << file;
     view->read(f);
 
-    setWindowTitle(tr("%1 - QImageViewer").arg(QFileInfo(m_file).baseName()));
+    updateTitle();
 }
 
 void MainWindow::openWindow(const QString &file)
@@ -122,7 +122,7 @@ void MainWindow::saveAs()
 
     m_file = file;
     save();
-    setWindowTitle(tr("%1 - QImageViewer").arg(QFileInfo(m_file).baseName()));
+    updateTitle();
 }
 
 void MainWindow::preferences()
@@ -165,6 +165,8 @@ void MainWindow::updateSaveActions()
 
     actionSave->setEnabled(canSave);
     actionSaveAs->setEnabled(canSaveAs);
+
+    updateTitle();
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
@@ -395,4 +397,18 @@ void MainWindow::retranslateUi()
     actionResize->setText(tr("Resize image.."));
     actionAbout->setText(tr("About..."));
     actionAboutQt->setText(tr("Qbout Qt..."));
+}
+
+void MainWindow::updateTitle()
+{
+    bool modified = view->isModified();
+
+    if (!m_file.isEmpty()) {
+        if (modified)
+            setWindowTitle(tr("%1* - QImageViewer").arg(QFileInfo(m_file).baseName()));
+        else
+            setWindowTitle(tr("%1 - QImageViewer").arg(QFileInfo(m_file).baseName()));
+    } else {
+        setWindowTitle(tr("QImageViewer"));
+    }
 }
