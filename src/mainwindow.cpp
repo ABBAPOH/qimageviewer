@@ -402,7 +402,7 @@ void MainWindow::retranslateUi()
     actionPreferences->setText(tr("Preferences"));
     actionResize->setText(tr("Resize image.."));
     actionAbout->setText(tr("About..."));
-    actionAboutQt->setText(tr("Qbout Qt..."));
+    actionAboutQt->setText(tr("About Qt..."));
 }
 
 void MainWindow::updateTitle()
