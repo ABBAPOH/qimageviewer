@@ -2,6 +2,7 @@
 #include "qimageview_p.h"
 
 #include <QtGui/QApplication>
+#include <QtGui/QAction>
 #include <QtGui/QClipboard>
 #include <QtGui/QListWidget>
 #include <QtGui/QImageReader>
@@ -384,6 +385,22 @@ void QImageViewPrivate::undoIndexChanged(int index)
         setModified(true);
 }
 
+void QImageViewPrivate::onMoveToolTriggered(bool triggered)
+{
+    Q_Q(QImageView);
+
+    if (triggered)
+        q->setMouseMode(QImageView::MouseModeMove);
+}
+
+void QImageViewPrivate::onSelectionToolTriggered(bool triggered)
+{
+    Q_Q(QImageView);
+
+    if (triggered)
+        q->setMouseMode(QImageView::MouseModeSelect);
+}
+
 void QImageViewPrivate::addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs)
 {
     Q_Q(QImageView);
@@ -622,6 +639,138 @@ void QImageViewPrivate::drawSelection(QPainter *p)
     p->drawText(textPos, text);
 }
 
+void QImageViewPrivate::createActions()
+{
+    Q_Q(QImageView);
+
+    actions[QImageView::Redo] = new QAction(q);
+    actions[QImageView::Redo]->setObjectName("actionRedo");
+    actions[QImageView::Redo]->setShortcut(QKeySequence::Redo);
+    q->connect(actions[QImageView::Redo], SIGNAL(triggered()), q, SLOT(redo()));
+    q->connect(q, SIGNAL(canRedoChanged(bool)), actions[QImageView::Redo], SLOT(setEnabled(bool)));
+
+    actions[QImageView::Undo] = new QAction(q);
+    actions[QImageView::Undo]->setObjectName("actionUndo");
+    actions[QImageView::Undo]->setShortcut(QKeySequence::Undo);
+    q->connect(actions[QImageView::Undo], SIGNAL(triggered()), q, SLOT(undo()));
+    q->connect(q, SIGNAL(canUndoChanged(bool)), actions[QImageView::Undo], SLOT(setEnabled(bool)));
+
+    actions[QImageView::Copy] = new QAction(q);
+    actions[QImageView::Copy]->setObjectName("actionCopy");
+    actions[QImageView::Copy]->setShortcut(QKeySequence::Copy);
+    q->connect(actions[QImageView::Copy], SIGNAL(triggered()), q, SLOT(copy()));
+    q->connect(q, SIGNAL(canCopyChanged(bool)), actions[QImageView::Copy], SLOT(setEnabled(bool)));
+
+    actions[QImageView::Cut] = new QAction(q);
+    actions[QImageView::Cut]->setObjectName("actionCut");
+    actions[QImageView::Cut]->setShortcut(QKeySequence::Cut);
+    q->connect(actions[QImageView::Cut], SIGNAL(triggered()), q, SLOT(cut()));
+    q->connect(q, SIGNAL(canCopyChanged(bool)), actions[QImageView::Cut], SLOT(setEnabled(bool)));
+
+    actions[QImageView::MoveTool] = new QAction(q);
+    actions[QImageView::MoveTool]->setObjectName("actionMoveTool");
+    actions[QImageView::MoveTool]->setCheckable(true);
+    actions[QImageView::MoveTool]->setChecked(true);
+    actions[QImageView::MoveTool]->setShortcut(QKeySequence("Ctrl+1"));
+    q->connect(actions[QImageView::MoveTool], SIGNAL(triggered(bool)), q, SLOT(onMoveToolTriggered(bool)));
+
+    actions[QImageView::SelectionTool] = new QAction(q);
+    actions[QImageView::SelectionTool]->setObjectName("actionSelectionTool");
+    actions[QImageView::SelectionTool]->setCheckable(true);
+    actions[QImageView::SelectionTool]->setShortcut(QKeySequence("Ctrl+2"));
+    q->connect(actions[QImageView::SelectionTool], SIGNAL(triggered(bool)), q, SLOT(onSelectionToolTriggered(bool)));
+
+    QActionGroup *toolGroup = new QActionGroup(q);
+    toolGroup->setExclusive(true);
+    toolGroup->addAction(actions[QImageView::MoveTool]);
+    toolGroup->addAction(actions[QImageView::SelectionTool]);
+
+    actions[QImageView::ZoomIn] = new QAction(q);
+    actions[QImageView::ZoomIn]->setObjectName("actionZoomIn");
+    actions[QImageView::ZoomIn]->setShortcut(QKeySequence::ZoomIn);
+    q->connect(actions[QImageView::ZoomIn], SIGNAL(triggered()), q, SLOT(zoomIn()));
+
+    actions[QImageView::ZoomOut] = new QAction(q);
+    actions[QImageView::ZoomOut]->setObjectName("actionZoomOut");
+    actions[QImageView::ZoomOut]->setShortcut(QKeySequence::ZoomOut);
+    q->connect(actions[QImageView::ZoomOut], SIGNAL(triggered()), q, SLOT(zoomOut()));
+
+    actions[QImageView::FitInView] = new QAction(q);
+    actions[QImageView::FitInView]->setObjectName("actionFitInView");
+    actions[QImageView::FitInView]->setShortcut(QKeySequence("Ctrl+9"));
+    q->connect(actions[QImageView::FitInView], SIGNAL(triggered()), q, SLOT(fitInView()));
+
+    actions[QImageView::NormalSize] = new QAction(q);
+    actions[QImageView::NormalSize]->setObjectName("actionNormalSize");
+    actions[QImageView::NormalSize]->setShortcut(QKeySequence("Ctrl+0"));
+    q->connect(actions[QImageView::NormalSize], SIGNAL(triggered()), q, SLOT(normalSize()));
+
+    actions[QImageView::RotateLeft] = new QAction(q);
+    actions[QImageView::RotateLeft]->setObjectName("actionRotateLeft");
+    actions[QImageView::RotateLeft]->setShortcut(QKeySequence("Ctrl+L"));
+    q->connect(actions[QImageView::RotateLeft], SIGNAL(triggered()), q, SLOT(rotateLeft()));
+
+    actions[QImageView::RotateRight] = new QAction(q);
+    actions[QImageView::RotateRight]->setObjectName("actionRotateRight");
+    actions[QImageView::RotateRight]->setShortcut(QKeySequence("Ctrl+R"));
+    q->connect(actions[QImageView::RotateRight], SIGNAL(triggered()), q, SLOT(rotateRight()));
+
+    actions[QImageView::FlipHorizontally] = new QAction(q);
+    actions[QImageView::FlipHorizontally]->setObjectName("actionFlipHorizontally");
+    actions[QImageView::FlipHorizontally]->setShortcut(QKeySequence("Ctrl+Shift+H"));
+    q->connect(actions[QImageView::FlipHorizontally], SIGNAL(triggered()), q, SLOT(flipHorizontally()));
+
+    actions[QImageView::FlipVertically] = new QAction(q);
+    actions[QImageView::FlipVertically]->setObjectName("actionFlipVertically");
+    actions[QImageView::FlipVertically]->setShortcut(QKeySequence("Ctrl+Shift+V"));
+    q->connect(actions[QImageView::FlipVertically], SIGNAL(triggered()), q, SLOT(flipVertically()));
+
+    for (int i = 0; i < QImageView::ActionsCount; ++i) {
+        actions[i]->setShortcutContext(Qt::WidgetShortcut);
+        q->addAction(actions[i]);
+    }
+
+    updateActions();
+}
+
+void QImageViewPrivate::retranslateUi()
+{
+    actions[QImageView::Redo]->setText(QImageView::tr("Redo"));
+    actions[QImageView::Undo]->setText(QImageView::tr("Undo"));
+    actions[QImageView::Copy]->setText(QImageView::tr("Copy"));
+    actions[QImageView::Cut]->setText(QImageView::tr("Cut"));
+    actions[QImageView::MoveTool]->setText(QImageView::tr("Move tool"));
+    actions[QImageView::SelectionTool]->setText(QImageView::tr("Selection tool"));
+
+    actions[QImageView::ZoomIn]->setText(QImageView::tr("Zoom in"));
+    actions[QImageView::ZoomOut]->setText(QImageView::tr("Zoom out"));
+    actions[QImageView::FitInView]->setText(QImageView::tr("Fit in view"));
+    actions[QImageView::NormalSize]->setText(QImageView::tr("Normal size"));
+
+    actions[QImageView::RotateLeft]->setText(QImageView::tr("Rotate left"));
+    actions[QImageView::RotateRight]->setText(QImageView::tr("Rotate right"));
+    actions[QImageView::FlipHorizontally]->setText(QImageView::tr("Flip horizontally"));
+    actions[QImageView::FlipVertically]->setText(QImageView::tr("Flip vertically"));
+}
+
+void QImageViewPrivate::updateActions()
+{
+    bool enabled = !image.isNull();
+
+    actions[QImageView::Redo]->setEnabled(enabled);
+    actions[QImageView::Undo]->setEnabled(enabled);
+
+    actions[QImageView::ZoomIn]->setEnabled(enabled);
+    actions[QImageView::ZoomOut]->setEnabled(enabled);
+    actions[QImageView::FitInView]->setEnabled(enabled);
+    actions[QImageView::NormalSize]->setEnabled(enabled);
+
+    actions[QImageView::RotateLeft]->setEnabled(enabled);
+    actions[QImageView::RotateRight]->setEnabled(enabled);
+    actions[QImageView::FlipHorizontally]->setEnabled(enabled);
+    actions[QImageView::FlipVertically]->setEnabled(enabled);
+}
+
 QImageView::QImageView(QWidget *parent) :
     QAbstractScrollArea(parent),
     d_ptr(new QImageViewPrivate(this))
@@ -641,12 +790,25 @@ QImageView::QImageView(QWidget *parent) :
     settings->d_func()->addView(this);
 
     d->updateThumbnailsState();
+
+    d->createActions();
+    d->retranslateUi();
 }
 
 QImageView::~QImageView()
 {
     QImageViewSettings::globalSettings()->d_func()->removeView(this);
     delete d_ptr;
+}
+
+QAction * QImageView::action(QImageView::Action action) const
+{
+    Q_D(const QImageView);
+
+    if (action < 0 || action >= ActionsCount)
+        return 0;
+
+    return d->actions[action];
 }
 
 bool QImageView::canCopy() const
@@ -700,6 +862,7 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
         d->zoomFactor = 1.0;
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
+        d->updateActions();
         return;
     }
 
@@ -709,6 +872,7 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
     bestFit();
     viewport()->update();
     d->setCanWrite(imageCount() == 1);
+    d->updateActions();
 }
 
 void QImageView::write(QIODevice *device, const QByteArray &format)
@@ -739,6 +903,7 @@ void QImageView::setImage(const QImage &image)
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
         d->setCanWrite(false);
+        d->updateActions();
         return;
     }
 
@@ -753,6 +918,7 @@ void QImageView::setImage(const QImage &image)
     d->updateThumbnailsState();
     bestFit();
     viewport()->update();
+    d->updateActions();
 }
 
 int QImageView::currentImageNumber() const
@@ -1055,12 +1221,6 @@ void QImageView::keyPressEvent(QKeyEvent *e)
     case Qt::Key_Escape :
         clearSelection();
         break;
-    case Qt::Key_C :
-        if (e->modifiers() & Qt::ControlModifier)
-            copy();
-    case Qt::Key_X :
-        if (e->modifiers() & Qt::ControlModifier)
-            cut();
     default:
         break;
     }

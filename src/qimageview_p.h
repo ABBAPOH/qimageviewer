@@ -130,6 +130,8 @@ public:
     void updateViewport();
     void animationFinished();
     void undoIndexChanged(int);
+    void onMoveToolTriggered(bool);
+    void onSelectionToolTriggered(bool);
 
     void addAxisAnimation(Qt::Axis axis, qreal endValue, int msecs);
     bool hasRunningAnimations() const;
@@ -145,6 +147,10 @@ public:
 
     void drawBackground(QPainter *p);
     void drawSelection(QPainter *p);
+
+    void createActions();
+    void retranslateUi();
+    void updateActions();
 
 public:
     struct ImageData
@@ -182,6 +188,8 @@ public:
 
     QListWidget *listWidget;
     QImageView::Position thumbnailsPosition;
+
+    QAction *actions[QImageView::ActionsCount];
 
 private:
     QImageView *q_ptr;

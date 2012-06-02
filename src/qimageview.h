@@ -31,8 +31,32 @@ public:
     };
     Q_ENUMS(Position)
 
+    enum Action {
+        Redo,
+        Undo,
+        Copy,
+        Cut,
+        MoveTool,
+        SelectionTool,
+
+        ZoomIn,
+        ZoomOut,
+        FitInView,
+        NormalSize,
+
+        RotateLeft,
+        RotateRight,
+        FlipHorizontally,
+        FlipVertically,
+
+        ActionsCount
+    };
+    Q_ENUMS(Position)
+
     explicit QImageView(QWidget *parent = 0);
     ~QImageView();
+
+    QAction *action(Action action) const;
 
     bool canCopy() const;
 
@@ -116,6 +140,8 @@ protected:
     Q_PRIVATE_SLOT(d_func(), void updateScrollBars())
     Q_PRIVATE_SLOT(d_func(), void animationFinished())
     Q_PRIVATE_SLOT(d_func(), void undoIndexChanged(int))
+    Q_PRIVATE_SLOT(d_func(), void onMoveToolTriggered(bool))
+    Q_PRIVATE_SLOT(d_func(), void onSelectionToolTriggered(bool))
 };
 
 #endif // QIMAGEVIEW_H

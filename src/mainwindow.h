@@ -3,10 +3,6 @@
 
 #include <QMainWindow>
 
-namespace Ui {
-class MainWindow;
-}
-
 class QActionGroup;
 class QImageView;
 
@@ -29,9 +25,6 @@ public slots:
     void save();
     void saveAs();
 
-    void onMoveToolTriggered(bool);
-    void onSelectionToolTriggered(bool);
-
     static void preferences();
 
     void resizeImage();
@@ -43,12 +36,41 @@ protected:
     void closeEvent(QCloseEvent *);
 
 private:
+    void setupUi();
+    void setupMenuBar();
+    void setupToolBar();
+    void setupFileMenu();
+    void setupEditMenu();
+    void setupViewMenu();
+    void setupToolsMenu();
+    void setupHelpMenu();
     void setupConnections();
+    void retranslateUi();
 
 private:
-    Ui::MainWindow *ui;
+    QImageView *view;
     QString m_file;
-    QActionGroup *m_toolGroup;
+
+    QMenuBar *m_menuBar;
+    QToolBar *m_toolBar;
+
+    QMenu *fileMenu;
+    QMenu *editMenu;
+    QMenu *viewMenu;
+    QMenu *toolsMenu;
+    QMenu *helpMenu;
+
+    QAction *actionOpen;
+    QAction *actionSave;
+    QAction *actionSaveAs;
+    QAction *actionClose;
+    QAction *actionQuit;
+
+    QAction *actionPreferences;
+    QAction *actionResize;
+
+    QAction *actionAbout;
+    QAction *actionAboutQt;
 };
 
 #endif // MAINWINDOW_H

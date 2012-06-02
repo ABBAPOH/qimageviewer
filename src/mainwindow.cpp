@@ -1,12 +1,14 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 
 #include <QDebug>
 #include <QPointer>
 
+#include <QApplication>
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QMenuBar>
+#include <QToolBar>
 
 #include "qimageview.h"
 #include "qimageresizedialog.h"
@@ -15,16 +17,9 @@
 #include "windowsmenu.h"
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    QMainWindow(parent)
 {
-    ui->setupUi(this);
-
-    m_toolGroup = new QActionGroup(this);
-    m_toolGroup->setExclusive(true);
-    m_toolGroup->addAction(ui->actionMoveTool);
-    m_toolGroup->addAction(ui->actionSelectionTool);
-    ui->menubar->insertMenu(ui->menuHelp->menuAction(), new WindowsMenu(ui->menubar));
+    setupUi();
 
     QAction *easterEggAction = new QAction(this);
     easterEggAction->setShortcuts(QList<QKeySequence>() << QKeySequence("Shift+Space"));
@@ -34,12 +29,12 @@ MainWindow::MainWindow(QWidget *parent) :
     setupConnections();
 
     resize(800, 600);
-//    ui->view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
+//    view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
+    retranslateUi();
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
 void MainWindow::about()
@@ -58,7 +53,7 @@ void MainWindow::open()
     if (files.isEmpty())
         return;
 
-    if (ui->view->image().isNull()) {
+    if (view->image().isNull()) {
         open(files.first());
         files = files.mid(1);
         if (!files.isEmpty())
@@ -74,7 +69,9 @@ void MainWindow::open(const QString &file)
     QFile *f = new QFile(file);
     if (!f->open(QFile::ReadOnly))
         qWarning() << "Can't open file" << file;
-    ui->view->read(f);
+    view->read(f);
+
+    setWindowTitle(tr("%1 - QImageViewer").arg(QFileInfo(m_file).baseName()));
 }
 
 void MainWindow::openWindow(const QString &file)
@@ -112,9 +109,9 @@ void MainWindow::newWindow()
 void MainWindow::save()
 {
     QFile f(m_file);
-    ui->view->write(&f, QFileInfo(m_file).suffix().toUtf8());
-//    ui->view->image().save(m_file);
-    ui->view->setModified(false);
+    view->write(&f, QFileInfo(m_file).suffix().toUtf8());
+//    view->image().save(m_file);
+    view->setModified(false);
 }
 
 void MainWindow::saveAs()
@@ -125,18 +122,7 @@ void MainWindow::saveAs()
 
     m_file = file;
     save();
-}
-
-void MainWindow::onMoveToolTriggered(bool triggered)
-{
-    if (triggered)
-        ui->view->setMouseMode(QImageView::MouseModeMove);
-}
-
-void MainWindow::onSelectionToolTriggered(bool triggered)
-{
-    if (triggered)
-        ui->view->setMouseMode(QImageView::MouseModeSelect);
+    setWindowTitle(tr("%1 - QImageViewer").arg(QFileInfo(m_file).baseName()));
 }
 
 void MainWindow::preferences()
@@ -157,15 +143,15 @@ void MainWindow::preferences()
 void MainWindow::resizeImage()
 {
     QImageResizeDialog d(this);
-    d.setImageSize(ui->view->image().size());
+    d.setImageSize(view->image().size());
     if (d.exec()) {
-        ui->view->resizeImage(d.imageSize());
+        view->resizeImage(d.imageSize());
     }
 }
 
 void MainWindow::easterEgg()
 {
-    if (ui->view->image().isNull()) {
+    if (view->image().isNull()) {
         open(":/icons/qimageviewer.png");
     } else {
         openWindow(":/icons/qimageviewer.png");
@@ -174,17 +160,17 @@ void MainWindow::easterEgg()
 
 void MainWindow::updateSaveActions()
 {
-    bool canSaveAs = ui->view->canWrite();
-    bool canSave = canSaveAs && ui->view->isModified();
+    bool canSaveAs = view->canWrite();
+    bool canSave = canSaveAs && view->isModified();
 
-    ui->actionSave->setEnabled(canSave);
-    ui->actionSaveAs->setEnabled(canSaveAs);
+    actionSave->setEnabled(canSave);
+    actionSaveAs->setEnabled(canSaveAs);
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
 {
     // TODO: add auto saving on quit
-    if (!ui->view->isModified())
+    if (!view->isModified())
         return;
 
     QMessageBox msgBox(this);
@@ -201,7 +187,7 @@ void MainWindow::closeEvent(QCloseEvent *e)
         else
             save();
 
-        if (ui->view->isModified())
+        if (view->isModified())
             e->ignore();
         else
             e->accept();
@@ -220,49 +206,193 @@ void MainWindow::closeEvent(QCloseEvent *e)
     }
 }
 
+void MainWindow::setupUi()
+{
+    setWindowTitle(tr("QImageViewer"));
+
+    view = new QImageView(this);
+    setCentralWidget(view);
+
+    setupMenuBar();
+    setupToolBar();
+}
+
+void MainWindow::setupMenuBar()
+{
+    m_menuBar = new QMenuBar(this);
+    this->setMenuBar(m_menuBar);
+
+    setupFileMenu();
+    setupEditMenu();
+    setupViewMenu();
+    setupToolsMenu();
+    setupHelpMenu();
+    m_menuBar->insertMenu(helpMenu->menuAction(), new WindowsMenu(m_menuBar));
+}
+
+void MainWindow::setupToolBar()
+{
+    m_toolBar = new QToolBar(this);
+
+    m_toolBar->addAction(view->action(QImageView::ZoomIn));
+    m_toolBar->addAction(view->action(QImageView::ZoomOut));
+    m_toolBar->addSeparator();
+    m_toolBar->addAction(view->action(QImageView::MoveTool));
+    m_toolBar->addAction(view->action(QImageView::SelectionTool));
+    m_toolBar->addSeparator();
+    m_toolBar->addAction(view->action(QImageView::RotateLeft));
+    m_toolBar->addAction(view->action(QImageView::RotateRight));
+
+    setUnifiedTitleAndToolBarOnMac(true);
+    addToolBar(m_toolBar);
+}
+
+void MainWindow::setupFileMenu()
+{
+    fileMenu = new QMenu(this);
+
+    actionOpen = new QAction(this);
+    actionOpen->setObjectName("actionOpen");
+    actionOpen->setShortcut(QKeySequence::Open);
+    fileMenu->addAction(actionOpen);
+
+    actionSave = new QAction(this);
+    actionSave->setObjectName("actionSave");
+    actionSave->setShortcut(QKeySequence::Save);
+    actionSave->setEnabled(false);
+    fileMenu->addAction(actionSave);
+
+    actionSaveAs = new QAction(this);
+    actionSaveAs->setObjectName("actionSaveAs");
+    actionSaveAs->setShortcut(QKeySequence::SaveAs);
+    actionSaveAs->setEnabled(false);
+    fileMenu->addAction(actionSaveAs);
+
+    fileMenu->addSeparator();
+
+    actionClose = new QAction(this);
+    actionClose->setObjectName("actionClose");
+    actionClose->setShortcut(QKeySequence("Ctrl+W"));
+    fileMenu->addAction(actionClose);
+
+    fileMenu->addSeparator();
+
+    actionQuit = new QAction(this);
+    actionQuit->setObjectName("actionQuit");
+    actionQuit->setMenuRole(QAction::QuitRole);
+    actionQuit->setShortcut(QKeySequence("Ctrl+Q"));
+    fileMenu->addAction(actionQuit);
+
+    m_menuBar->addMenu(fileMenu);
+}
+
+void MainWindow::setupEditMenu()
+{
+    editMenu = new QMenu(this);
+
+    editMenu->addAction(view->action(QImageView::Undo));
+    editMenu->addAction(view->action(QImageView::Redo));
+    editMenu->addSeparator();
+    editMenu->addAction(view->action(QImageView::Cut));
+    editMenu->addAction(view->action(QImageView::Copy));
+    editMenu->addSeparator();
+    editMenu->addAction(view->action(QImageView::MoveTool));
+    editMenu->addAction(view->action(QImageView::SelectionTool));
+    editMenu->addSeparator();
+
+    actionPreferences = new QAction(this);
+    actionPreferences->setObjectName("actionPreferences");
+    actionPreferences->setShortcut(QKeySequence("Ctrl+,"));
+    editMenu->addAction(actionPreferences);
+
+    m_menuBar->addMenu(editMenu);
+}
+
+void MainWindow::setupViewMenu()
+{
+    viewMenu = new QMenu(this);
+
+    viewMenu->addAction(view->action(QImageView::ZoomIn));
+    viewMenu->addAction(view->action(QImageView::ZoomOut));
+    viewMenu->addAction(view->action(QImageView::FitInView));
+    viewMenu->addAction(view->action(QImageView::NormalSize));
+
+    m_menuBar->addMenu(viewMenu);
+}
+
+void MainWindow::setupToolsMenu()
+{
+    toolsMenu = new QMenu(this);
+
+    actionResize = new QAction(this);
+    actionResize->setObjectName("actionResize");
+    toolsMenu->addAction(actionResize);
+
+    toolsMenu->addSeparator();
+
+    toolsMenu->addAction(view->action(QImageView::RotateLeft));
+    toolsMenu->addAction(view->action(QImageView::RotateRight));
+
+    toolsMenu->addSeparator();
+
+    toolsMenu->addAction(view->action(QImageView::FlipHorizontally));
+    toolsMenu->addAction(view->action(QImageView::FlipVertically));
+
+    m_menuBar->addMenu(toolsMenu);
+}
+
+void MainWindow::setupHelpMenu()
+{
+    helpMenu = new QMenu(this);
+
+    actionAbout = new QAction(this);
+    actionAbout->setObjectName("actionAbout");
+    actionAbout->setMenuRole(QAction::AboutRole);
+    helpMenu->addAction(actionAbout);
+
+    actionAboutQt = new QAction(this);
+    actionAboutQt->setObjectName("actionAboutQt");
+    actionAboutQt->setMenuRole(QAction::AboutQtRole);
+    helpMenu->addAction(actionAboutQt);
+
+    m_menuBar->addMenu(helpMenu);
+}
+
 void MainWindow::setupConnections()
 {
-    connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(open()));
-    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(save()));
-    connect(ui->view, SIGNAL(modifiedChanged(bool)), this, SLOT(updateSaveActions()));
-    connect(ui->actionSaveAs, SIGNAL(triggered()), this, SLOT(saveAs()));
+    connect(actionOpen, SIGNAL(triggered()), this, SLOT(open()));
+    connect(actionSave, SIGNAL(triggered()), this, SLOT(save()));
+    connect(actionSaveAs, SIGNAL(triggered()), this, SLOT(saveAs()));
+    connect(actionClose, SIGNAL(triggered()), this, SLOT(close()));
+    connect(actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
 
-    connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
+    connect(view, SIGNAL(modifiedChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
 
-    connect(ui->actionRedo, SIGNAL(triggered()), ui->view, SLOT(redo()));
-    connect(ui->view, SIGNAL(canRedoChanged(bool)), ui->actionRedo, SLOT(setEnabled(bool)));
-    connect(ui->actionUndo, SIGNAL(triggered()), ui->view, SLOT(undo()));
-    connect(ui->view, SIGNAL(canUndoChanged(bool)), ui->actionUndo, SLOT(setEnabled(bool)));
+    connect(actionPreferences, SIGNAL(triggered(bool)), this, SLOT(preferences()));
 
-    connect(ui->actionCopy, SIGNAL(triggered()), ui->view, SLOT(copy()));
-    connect(ui->view, SIGNAL(canCopyChanged(bool)), ui->actionCopy, SLOT(setEnabled(bool)));
-    connect(ui->actionCut, SIGNAL(triggered()), ui->view, SLOT(cut()));
-    connect(ui->view, SIGNAL(canCopyChanged(bool)), ui->actionCut, SLOT(setEnabled(bool)));
+    connect(actionResize, SIGNAL(triggered()), this, SLOT(resizeImage()));
 
-    connect(ui->view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
-    connect(ui->view, SIGNAL(canWriteChanged(bool)), this, SLOT(updateSaveActions()));
+    connect(actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+    connect(actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+}
 
-    connect(ui->actionMoveTool, SIGNAL(triggered(bool)), this, SLOT(onMoveToolTriggered(bool)));
-    connect(ui->actionSelectionTool, SIGNAL(triggered(bool)), this, SLOT(onSelectionToolTriggered(bool)));
+void MainWindow::retranslateUi()
+{
+    fileMenu->setTitle(tr("File"));
+    editMenu->setTitle(tr("Edit"));
+    viewMenu->setTitle(tr("View"));
+    toolsMenu->setTitle(tr("Tools"));
+    helpMenu->setTitle(tr("Help"));
 
-    connect(ui->actionPreferences, SIGNAL(triggered(bool)), this, SLOT(preferences()));
-
-    connect(ui->actionResizeImage, SIGNAL(triggered()), this, SLOT(resizeImage()));
-
-    connect(ui->actionZoomIn, SIGNAL(triggered()), ui->view, SLOT(zoomIn()));
-    connect(ui->actionZoomOut, SIGNAL(triggered()), ui->view, SLOT(zoomOut()));
-    connect(ui->actionNormalSize, SIGNAL(triggered()), ui->view, SLOT(normalSize()));
-    connect(ui->actionFitInView, SIGNAL(triggered()), ui->view, SLOT(fitInView()));
-
-    connect(ui->actionPreviousImage, SIGNAL(triggered()), ui->view, SLOT(prevImage()));
-    connect(ui->actionNextImage, SIGNAL(triggered()), ui->view, SLOT(nextImage()));
-
-    connect(ui->actionRotateLeft, SIGNAL(triggered()), ui->view, SLOT(rotateLeft()));
-    connect(ui->actionRotateRight, SIGNAL(triggered()), ui->view, SLOT(rotateRight()));
-
-    connect(ui->actionFlipHorizontally, SIGNAL(triggered()), ui->view, SLOT(flipHorizontally()));
-    connect(ui->actionFlipVertically, SIGNAL(triggered()), ui->view, SLOT(flipVertically()));
-
-    connect(ui->actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
-    connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+    actionOpen->setText(tr("Open"));
+    actionSave->setText(tr("Save"));
+    actionSaveAs->setText(tr("SaveAs"));
+    actionClose->setText(tr("Close"));
+    actionQuit->setText(tr("Quit"));
+    actionPreferences->setText(tr("Preferences"));
+    actionResize->setText(tr("Resize image.."));
+    actionAbout->setText(tr("About..."));
+    actionAboutQt->setText(tr("Qbout Qt..."));
 }
