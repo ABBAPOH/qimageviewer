@@ -35,6 +35,7 @@ public slots:
     static void preferences();
 
     void resizeImage();
+    void easterEgg();
 
     void updateSaveActions();
 

@@ -26,6 +26,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_toolGroup->addAction(ui->actionSelectionTool);
     ui->menubar->insertMenu(ui->menuHelp->menuAction(), new WindowsMenu(ui->menubar));
 
+    QAction *easterEggAction = new QAction(this);
+    easterEggAction->setShortcuts(QList<QKeySequence>() << QKeySequence("Shift+Space"));
+    connect(easterEggAction, SIGNAL(triggered()), SLOT(easterEgg()));
+    addAction(easterEggAction);
+
     setupConnections();
 
     resize(800, 600);
@@ -155,6 +160,15 @@ void MainWindow::resizeImage()
     d.setImageSize(ui->view->image().size());
     if (d.exec()) {
         ui->view->resizeImage(d.imageSize());
+    }
+}
+
+void MainWindow::easterEgg()
+{
+    if (ui->view->image().isNull()) {
+        open(":/icons/qimageviewer.png");
+    } else {
+        openWindow(":/icons/qimageviewer.png");
     }
 }
 
