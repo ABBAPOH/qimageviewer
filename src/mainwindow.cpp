@@ -213,6 +213,9 @@ void MainWindow::closeEvent(QCloseEvent *e)
 void MainWindow::setupUi()
 {
     setWindowTitle(tr("QImageViewer"));
+#ifndef Q_OS_MAC
+    setWindowIcon(QIcon(":/icons/qimageviewer.png"));
+#endif
 
     view = new QImageView(this);
     setCentralWidget(view);
