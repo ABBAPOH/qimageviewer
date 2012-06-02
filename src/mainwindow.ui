@@ -83,8 +83,6 @@
     <addaction name="separator"/>
     <addaction name="actionFlipHorizontally"/>
     <addaction name="actionFlipVertically"/>
-    <addaction name="separator"/>
-    <addaction name="actionShowWelcomeWindow"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -338,11 +336,6 @@
    </property>
    <property name="shortcut">
     <string>Right</string>
-   </property>
-  </action>
-  <action name="actionShowWelcomeWindow">
-   <property name="text">
-    <string>Show welcome window</string>
    </property>
   </action>
   <action name="actionClose">

@@ -12,7 +12,6 @@
 #include "qimageresizedialog.h"
 #include "qimageviewsettings.h"
 #include "preferenceswidget.h"
-#include "welcomewindow.h"
 #include "windowsmenu.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -56,18 +55,34 @@ void MainWindow::open()
     if (files.isEmpty())
         return;
 
-    MainWindow::open(files);
+    if (m_view->image().isNull()) {
+        open(files.first());
+        files = files.mid(1);
+        if (!files.isEmpty())
+            openWindow(files);
+    } else {
+        openWindow(files);
+    }
 }
 
 void MainWindow::open(const QString &file)
 {
+    m_file = file;
+    QFile *f = new QFile(file);
+    if (!f->open(QFile::ReadOnly))
+        qWarning() << "Can't open file" << file;
+    m_view->read(f);
+}
+
+void MainWindow::openWindow(const QString &file)
+{
     MainWindow *window = new MainWindow;
     window->setAttribute(Qt::WA_DeleteOnClose);
     window->show();
-    window->setFile(file);
+    window->open(file);
 }
 
-void MainWindow::open(const QStringList &files)
+void MainWindow::openWindow(const QStringList &files)
 {
     if (files.count() > 10) {
         QMessageBox msgBox;
@@ -80,8 +95,15 @@ void MainWindow::open(const QStringList &files)
     }
 
     foreach (const QString &file, files) {
-        open(file);
+        openWindow(file);
     }
+}
+
+void MainWindow::newWindow()
+{
+    MainWindow *window = new MainWindow;
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    window->show();
 }
 
 void MainWindow::save()
@@ -145,11 +167,6 @@ void MainWindow::updateSaveActions()
 
     ui->actionSave->setEnabled(canSave);
     ui->actionSaveAs->setEnabled(canSaveAs);
-}
-
-void MainWindow::showWelcomeWindow()
-{
-    WelcomeWindow::showWelcomeWindow();
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
@@ -234,17 +251,6 @@ void MainWindow::setupConnections()
     connect(ui->actionFlipHorizontally, SIGNAL(triggered()), m_view, SLOT(flipHorizontally()));
     connect(ui->actionFlipVertically, SIGNAL(triggered()), m_view, SLOT(flipVertically()));
 
-    connect(ui->actionShowWelcomeWindow, SIGNAL(triggered()), this, SLOT(showWelcomeWindow()));
-
     connect(ui->actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
-}
-
-void MainWindow::setFile(const QString &file)
-{
-    m_file = file;
-    QFile *f = new QFile(file);
-    if (!f->open(QFile::ReadOnly))
-        qWarning() << "Can't open file" << file;
-    m_view->read(f);
 }

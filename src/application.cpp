@@ -14,7 +14,7 @@ bool Application::notify(QObject *object, QEvent *event)
 {
     if (event->type() == QEvent::FileOpen) {
         QFileOpenEvent *foe = static_cast<QFileOpenEvent*>(event);
-        MainWindow::open(foe->url().toLocalFile());
+        MainWindow::openWindow(foe->url().toLocalFile());
         return true;
     }
 

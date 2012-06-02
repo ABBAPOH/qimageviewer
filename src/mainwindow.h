@@ -22,8 +22,10 @@ public slots:
     void about();
 
     void open();
-    static void open(const QString &file);
-    static void open(const QStringList &files);
+    void open(const QString &file);
+    static void openWindow(const QString &file);
+    static void openWindow(const QStringList &files);
+    static void newWindow();
     void save();
     void saveAs();
 
@@ -36,15 +38,11 @@ public slots:
 
     void updateSaveActions();
 
-    void showWelcomeWindow();
-
 protected:
     void closeEvent(QCloseEvent *);
 
 private:
     void setupConnections();
-
-    void setFile(const QString &file);
 
 private:
     Ui::MainWindow *ui;

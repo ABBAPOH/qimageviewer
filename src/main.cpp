@@ -2,7 +2,6 @@
 
 #include "application.h"
 #include "mainwindow.h"
-#include "welcomewindow.h"
 
 int main(int argc, char *argv[])
 {
@@ -19,13 +18,13 @@ int main(int argc, char *argv[])
     }
 
     if (!files.isEmpty()) {
-        MainWindow::open(files);
+        MainWindow::openWindow(files);
         if (!app.topLevelWidgets().isEmpty())
             return app.exec();
     }
 
-    WelcomeWindow w;
-    w.show();
+
+    MainWindow::newWindow();
 
     return app.exec();
 }
