@@ -16,6 +16,7 @@
 #include "preferenceswidget.h"
 #include "windowsmenu.h"
 
+QSize m_lastSize;
 QList<MainWindow*> m_windows;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -30,7 +31,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setupConnections();
 
-    resize(800, 600);
+    if (!m_lastSize.isEmpty())
+        resize(m_lastSize);
+    else
+        resize(800, 600);
 //    view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
     retranslateUi();
 
@@ -236,6 +240,11 @@ void MainWindow::changeEvent(QEvent *e)
         }
     }
     QMainWindow::changeEvent(e);
+}
+
+void MainWindow::resizeEvent(QResizeEvent *e)
+{
+    m_lastSize = e->size();
 }
 
 void MainWindow::setupUi()

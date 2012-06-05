@@ -37,6 +37,7 @@ protected:
     void hideEvent(QHideEvent *);
     void showEvent(QShowEvent *);
     void changeEvent(QEvent *);
+    void resizeEvent(QResizeEvent *);
 
 private:
     void setupUi();
