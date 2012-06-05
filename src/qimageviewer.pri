@@ -31,3 +31,4 @@ FORMS += \
 RESOURCES += \
     src/resources.qrc
 
+include(qtsingleapplication/qtsingleapplication.pri)

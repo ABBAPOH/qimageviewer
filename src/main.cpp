@@ -1,3 +1,4 @@
+#include <QDir>
 #include <QUrl>
 
 #include "application.h"
@@ -5,26 +6,17 @@
 
 int main(int argc, char *argv[])
 {
-    Application app(argc, argv);
+    Application app("QImageViewer", argc, argv);
 
-    QStringList files;
-    foreach (const QString &argument, app.arguments().mid(1)) {
-        QUrl url = QUrl::fromUserInput(argument);
-        if (url.isLocalFile()) {
-            QString file = url.toLocalFile();
-            if (!file.isEmpty())
-                files.append(file);
-        }
+    QStringList arguments = app.arguments();
+    arguments[0] = QDir::currentPath();
+
+    if (app.isRunning()) {
+        app.sendMessage(arguments.join("\n"));
+        return 0;
     }
 
-    if (!files.isEmpty()) {
-        MainWindow::openWindow(files);
-        if (!app.topLevelWidgets().isEmpty())
-            return app.exec();
-    }
-
-
-    MainWindow::newWindow();
+    app.handleArguments(arguments);
 
     return app.exec();
 }
