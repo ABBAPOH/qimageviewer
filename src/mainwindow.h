@@ -34,6 +34,9 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *);
+    void hideEvent(QHideEvent *);
+    void showEvent(QShowEvent *);
+    void changeEvent(QEvent *);
 
 private:
     void setupUi();

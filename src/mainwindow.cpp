@@ -16,6 +16,8 @@
 #include "preferenceswidget.h"
 #include "windowsmenu.h"
 
+QList<MainWindow*> m_windows;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
@@ -31,6 +33,11 @@ MainWindow::MainWindow(QWidget *parent) :
     resize(800, 600);
 //    view->setImage(QImage("/Users/arch/Pictures/2048px-Smiley.svg.png"));
     retranslateUi();
+
+    if (!m_windows.isEmpty()) {
+        MainWindow *last = m_windows.last();
+        move(last->pos() + QPoint(20, 20));
+    }
 }
 
 MainWindow::~MainWindow()
@@ -208,6 +215,27 @@ void MainWindow::closeEvent(QCloseEvent *e)
     default:
         break;
     }
+}
+
+void MainWindow::hideEvent(QHideEvent *)
+{
+    m_windows.removeOne(this);
+}
+
+void MainWindow::showEvent(QShowEvent *)
+{
+    m_windows.prepend(this);
+}
+
+void MainWindow::changeEvent(QEvent *e)
+{
+    if (e->type() == QEvent::ActivationChange) {
+        if (isActiveWindow()) {
+            m_windows.removeOne(this);
+            m_windows.append(this);
+        }
+    }
+    QMainWindow::changeEvent(e);
 }
 
 void MainWindow::setupUi()
