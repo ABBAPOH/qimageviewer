@@ -137,7 +137,7 @@ public:
     bool hasRunningAnimations() const;
     void stopAnimations();
     void syncPixmap();
-    void setImage(const QImage &image);
+    void setImage(const QImage &rimage);
     void updateThumbnailsState();
     void updateThumbnailsGeometry();
 
@@ -162,7 +162,9 @@ public:
 
     QList<ImageData> images;
     int currentImageNumber;
-    QImage image;
+//    QImage image;
+    QImage &rimage() { return images[currentImageNumber].image; }
+    QImage image() const { return images[currentImageNumber].image; }
     QImageView::MouseMode mouseMode;
 
     QPixmap pixmap;

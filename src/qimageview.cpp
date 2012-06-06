@@ -161,12 +161,12 @@ CutCommand::CutCommand(const QRect &rect, QImageViewPrivate *dd) :
 
 void CutCommand::redo()
 {
-    m_image = d->image.copy(m_rect);
+    m_image = d->rimage().copy(m_rect);
 
-    QColor color = QColor(255, 255, 255, d->image.hasAlphaChannel() ? 0 : 255);
+    QColor color = QColor(255, 255, 255, d->rimage().hasAlphaChannel() ? 0 : 255);
     for (int x = 0; x < m_rect.width(); x++) {
         for (int y = 0; y < m_rect.height(); y++) {
-            d->image.setPixel(x + m_rect.x(), y + m_rect.y(), color.rgba());
+            d->rimage().setPixel(x + m_rect.x(), y + m_rect.y(), color.rgba());
         }
     }
 
@@ -178,7 +178,7 @@ void CutCommand::undo()
     for (int x = 0; x < m_rect.width(); x++) {
         for (int y = 0; y < m_rect.height(); y++) {
             QRgb color = m_image.pixel(x, y);
-            d->image.setPixel(m_rect.x() + x, m_rect.y() + y, color);
+            d->rimage().setPixel(m_rect.x() + x, m_rect.y() + y, color);
         }
     }
 
@@ -193,19 +193,19 @@ ResizeCommand::ResizeCommand(const QSize &size, QImageViewPrivate *dd) :
 
 void ResizeCommand::redo()
 {
-    m_image = d->image;
-    d->image = d->image.scaled(m_size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    m_image = d->rimage();
+    d->rimage() = d->rimage().scaled(m_size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     d->syncPixmap();
 }
 
 void ResizeCommand::undo()
 {
-    d->image = m_image;
+    d->rimage() = m_image;
     d->syncPixmap();
 }
 
 QImageViewPrivate::QImageViewPrivate(QImageView *qq) :
-    currentImageNumber(-1),
+    currentImageNumber(0),
     zoomFactor(1.0),
     visualZoomFactor(1.0),
     zoomAnimation(this),
@@ -234,6 +234,8 @@ QImageViewPrivate::QImageViewPrivate(QImageView *qq) :
     listWidget->setFocusPolicy(Qt::NoFocus);
     QObject::connect(listWidget, SIGNAL(currentRowChanged(int)), q, SLOT(jumpToImage(int)));
 
+    images.append(ImageData());
+
     QObject::connect(undoStack, SIGNAL(canRedoChanged(bool)), q, SIGNAL(canRedoChanged(bool)));
     QObject::connect(undoStack, SIGNAL(canUndoChanged(bool)), q, SIGNAL(canUndoChanged(bool)));
 
@@ -260,7 +262,7 @@ void QImageViewPrivate::setZoomFactor(qreal factor)
     if (zoomFactor == factor)
         return;
 
-    if (image.isNull())
+    if (rimage().isNull())
         return;
 
     if (factor < 0.01)
@@ -323,7 +325,7 @@ void QImageViewPrivate::rotate(bool left)
 
     QTransform matrix;
     matrix.rotate(left ? -90 : 90, Qt::ZAxis);
-    image = this->image.transformed(matrix, Qt::SmoothTransformation);
+    rimage() = this->rimage().transformed(matrix, Qt::SmoothTransformation);
     q->viewport()->update();
 
     addAxisAnimation(Qt::ZAxis, left ? - 90.0 : 90.0, 150);
@@ -333,7 +335,7 @@ void QImageViewPrivate::flipHorizontally()
 {
     QTransform matrix;
     matrix.rotate(180, Qt::YAxis);
-    image = image.transformed(matrix, Qt::SmoothTransformation);
+    rimage() = rimage().transformed(matrix, Qt::SmoothTransformation);
 
     addAxisAnimation(Qt::YAxis, 180.0, 200);
 }
@@ -342,7 +344,7 @@ void QImageViewPrivate::flipVertically()
 {
     QTransform matrix;
     matrix.rotate(180, Qt::XAxis);
-    image = image.transformed(matrix, Qt::SmoothTransformation);
+    rimage() = rimage().transformed(matrix, Qt::SmoothTransformation);
 
     addAxisAnimation(Qt::XAxis, 180.0, 200);
 }
@@ -434,7 +436,7 @@ void QImageViewPrivate::stopAnimations()
 
 void QImageViewPrivate::syncPixmap()
 {
-    pixmap = QPixmap::fromImage(image);
+    pixmap = QPixmap::fromImage(rimage());
 
     stopAnimations();
     updateViewport();
@@ -442,7 +444,7 @@ void QImageViewPrivate::syncPixmap()
 
 void QImageViewPrivate::setImage(const QImage &image)
 {
-    this->image = image;
+    this->rimage() = image;
 
     syncPixmap();
 }
@@ -538,7 +540,7 @@ qreal QImageViewPrivate::getFitInViewFactor() const
 {
     Q_Q(const QImageView);
 
-    QSize imageSize = image.size();
+    QSize imageSize = image().size();
     if (imageSize.isEmpty())
         return 1.0;
 
@@ -757,7 +759,7 @@ void QImageViewPrivate::retranslateUi()
 
 void QImageViewPrivate::updateActions()
 {
-    bool enabled = !image.isNull();
+    bool enabled = !image().isNull();
 
     if (!enabled) {
         actions[QImageView::Redo]->setEnabled(false);
@@ -863,6 +865,7 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
     }
 
     if (d->images.isEmpty()) {
+        d->images.append(QImageViewPrivate::ImageData());
         d->zoomFactor = 1.0;
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
@@ -884,14 +887,14 @@ void QImageView::write(QIODevice *device, const QByteArray &format)
     Q_D(QImageView);
 
     QImageWriter writer(device, format);
-    writer.write(d->image);
+    writer.write(d->rimage());
 }
 
 QImage QImageView::image() const
 {
     Q_D(const QImageView);
 
-    return d->image;
+    return d->image();
 }
 
 void QImageView::setImage(const QImage &image)
@@ -901,8 +904,9 @@ void QImageView::setImage(const QImage &image)
     d->images.clear();
 
     if (image.isNull()) {
+        d->images.append(QImageViewPrivate::ImageData());
         d->setImage(QImage());
-        d->currentImageNumber = -1;
+        d->currentImageNumber = 0;
         d->zoomFactor = 1.0;
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
@@ -993,7 +997,7 @@ QImage QImageView::selectedImage() const
 {
     Q_D(const QImageView);
 
-    return d->image.copy(selectedImageRect());
+    return d->image().copy(selectedImageRect());
 }
 
 QImageView::Position QImageView::thumbnailsPosition() const
@@ -1032,7 +1036,7 @@ void QImageView::bestFit()
 {
     Q_D(QImageView);
 
-    if (d->image.isNull())
+    if (d->rimage().isNull())
         return;
 
     qreal factor = d->getFitInViewFactor();
@@ -1044,7 +1048,7 @@ void QImageView::fitInView()
 {
     Q_D(QImageView);
 
-    if (d->image.isNull())
+    if (d->rimage().isNull())
         return;
 
     qreal factor = d->getFitInViewFactor();
@@ -1246,7 +1250,7 @@ void QImageView::paintEvent(QPaintEvent *)
     QColor backgroundColor = QImageViewSettings::globalSettings()->backgroundColor();
     p.fillRect(rect, backgroundColor);
 
-    if (d->image.isNull())
+    if (d->image().isNull())
         return;
 
     // Move and rotate painter
