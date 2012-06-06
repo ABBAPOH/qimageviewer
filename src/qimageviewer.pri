@@ -31,4 +31,6 @@ FORMS += \
 RESOURCES += \
     src/resources.qrc
 
+TRANSLATIONS = src/translations/qimageviewer_ru.ts
+
 include(qtsingleapplication/qtsingleapplication.pri)
