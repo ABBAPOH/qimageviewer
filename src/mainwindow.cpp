@@ -433,11 +433,11 @@ void MainWindow::retranslateUi()
 
     actionOpen->setText(tr("Open"));
     actionSave->setText(tr("Save"));
-    actionSaveAs->setText(tr("SaveAs"));
+    actionSaveAs->setText(tr("Save as..."));
     actionClose->setText(tr("Close"));
     actionQuit->setText(tr("Quit"));
     actionPreferences->setText(tr("Preferences"));
-    actionResize->setText(tr("Resize image.."));
+    actionResize->setText(tr("Resize image..."));
     actionAbout->setText(tr("About..."));
     actionAboutQt->setText(tr("About Qt..."));
 }
