@@ -87,6 +87,9 @@ public:
     Position thumbnailsPosition() const;
     void setThumbnailsPosition(Position position);
 
+    QByteArray saveState() const;
+    bool restoreState(const QByteArray &state);
+
 signals:
     void mouseModeChanged(MouseMode mode);
     void canCopyChanged(bool canCopy);

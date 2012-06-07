@@ -78,6 +78,22 @@ static QPoint containingPoint(QPoint pos, const QRect &rect)
     return pos;
 }
 
+static QDataStream &operator >>(QDataStream & s, QImageViewPrivate::ImageData &data)
+{
+    s >> data.image;
+    s >> data.originalImage;
+    s >> data.nextImageDelay;
+    return s;
+}
+
+static QDataStream &operator <<(QDataStream & s, const QImageViewPrivate::ImageData &data)
+{
+    s << data.image;
+    s << data.originalImage;
+    s << data.nextImageDelay;
+    return s;
+}
+
 ZoomAnimation::ZoomAnimation(QImageViewPrivate *dd, QObject *parent) :
     QVariantAnimation(parent),
     d(dd)
@@ -902,10 +918,10 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
 
     d->setImage(d->images.first().image);
 
+    d->setCanWrite(imageCount() == 1);
     d->updateThumbnailsState();
     bestFit();
     viewport()->update();
-    d->setCanWrite(imageCount() == 1);
     d->updateActions();
 }
 
@@ -1044,6 +1060,43 @@ void QImageView::setThumbnailsPosition(QImageView::Position position)
 
     d->thumbnailsPosition = position;
     d->updateThumbnailsState();
+}
+
+QByteArray QImageView::saveState() const
+{
+    Q_D(const QImageView);
+
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+
+    s << d->images;
+    s << d->currentImageNumber;
+    s << d->zoomFactor;
+
+    return result;
+}
+
+bool QImageView::restoreState(const QByteArray &arr)
+{
+    Q_D(QImageView);
+
+    QByteArray state(arr);
+    QDataStream s(&state, QIODevice::ReadOnly);
+
+    int imageNumber;
+    s >> d->images;
+    s >> imageNumber;
+    s >> d->zoomFactor;
+    d->visualZoomFactor = d->zoomFactor;
+
+    d->currentImageNumber = -1;
+    jumpToImage(imageNumber);
+
+    d->setCanWrite(imageCount() == 1);
+    d->updateThumbnailsState();
+    d->updateActions();
+
+    return true;
 }
 
 void QImageView::zoomIn()

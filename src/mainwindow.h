@@ -14,6 +14,11 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    static QList<MainWindow*> windows();
+
+    QByteArray saveState() const;
+    bool restoreState(const QByteArray &state);
+
 public slots:
     void about();
 

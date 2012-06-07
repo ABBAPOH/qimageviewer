@@ -1,5 +1,8 @@
 #include "application.h"
 
+#include <QDataStream>
+#include <QDebug>
+#include <QDesktopServices>
 #include <QDir>
 #include <QFileOpenEvent>
 #include <QSettings>
@@ -8,13 +11,61 @@
 #include "mainwindow.h"
 #include "qimageviewsettings.h"
 
+static const quint32 m_magic = 0xf0f0;
+static const quint8 m_version = 1;
+
 Application::Application(const QString &id, int &argc, char **argv) :
     QtSingleApplication(id, argc, argv)
 {
+    setApplicationName("QImageViewer");
+    setOrganizationName("arch");
     connect(this, SIGNAL(messageReceived(QString)), SLOT(handleMessage(QString)));
     connect(this, SIGNAL(aboutToQuit()), SLOT(onAboutToQuit()));
 
+    restoreSession();
     loadSettings();
+}
+
+QByteArray Application::saveState() const
+{
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+    QList<QByteArray> states;
+    s << m_magic;
+    s << m_version;
+    foreach (MainWindow *window, MainWindow::windows()) {
+        states.append(window->saveState());
+    }
+
+    s << states;
+    return result;
+}
+
+bool Application::restoreState(const QByteArray &arr)
+{
+    QByteArray state(arr);
+    QDataStream s(&state, QIODevice::ReadOnly);
+    QList<QByteArray> states;
+    quint32 magic;
+    quint8 version;
+
+    s >> magic;
+    if (magic != m_magic)
+        return false;
+
+    s >> version;
+    if (version != m_version)
+        return false;
+
+    s >> states;
+    foreach (const QByteArray &state, states) {
+        MainWindow *window = new MainWindow;
+        window->setAttribute(Qt::WA_DeleteOnClose);
+        window->restoreState(state);
+        window->show();
+    }
+
+    return true;
 }
 
 void Application::handleArguments(const QStringList &arguments)
@@ -50,7 +101,26 @@ void Application::handleArguments(const QStringList &arguments)
             return;
     }
 
-    MainWindow::newWindow();
+    if (topLevelWidgets().isEmpty())
+        MainWindow::newWindow();
+}
+
+void Application::restoreSession()
+{
+    QString dataPath = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    QString filePath = dataPath + QLatin1Char('/') + QLatin1String("session");
+
+    QFile f(filePath);
+    bool ok = true;
+    if (ok)
+        ok = f.open(QFile::ReadOnly);
+
+    if (ok) {
+        QByteArray state = f.readAll();
+        ok = restoreState(state);
+        if (!ok)
+            qWarning() << tr("Couldn't restore session (located at %1)").arg(filePath);
+    }
 }
 
 void Application::handleMessage(const QString &message)
@@ -62,6 +132,7 @@ void Application::handleMessage(const QString &message)
 void Application::onAboutToQuit()
 {
     saveSettings();
+    storeSession();
 }
 
 bool Application::notify(QObject *object, QEvent *event)
@@ -102,4 +173,17 @@ void Application::saveSettings()
     settings.setValue("image background color", imageSettings->imageBackgroundColor());
     settings.setValue("background color", imageSettings->backgroundColor());
     settings.setValue("use OpenGL", imageSettings->useOpenGL());
+}
+
+void Application::storeSession()
+{
+    QString dataPath = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    QDir().mkpath(dataPath);
+    QString filePath = dataPath + QLatin1Char('/') + QLatin1String("session");
+    QFile f(filePath);
+
+    if (!f.open(QFile::WriteOnly))
+        return;
+
+    f.write(saveState());
 }

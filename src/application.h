@@ -12,6 +12,9 @@ public:
 
     void handleArguments(const QStringList &arguments);
 
+    void restoreSession();
+    void storeSession();
+
 protected slots:
     void handleMessage(const QString &message);
     void onAboutToQuit();
@@ -21,6 +24,9 @@ protected:
 
     void loadSettings();
     void saveSettings();
+
+    QByteArray saveState() const;
+    bool restoreState(const QByteArray &state);
 };
 
 #endif // APPLICATION_H

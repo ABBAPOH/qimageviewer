@@ -47,6 +47,49 @@ MainWindow::~MainWindow()
 {
 }
 
+QList<MainWindow*> MainWindow::windows()
+{
+    return m_windows;
+}
+
+QByteArray MainWindow::saveState() const
+{
+    QByteArray result;
+    QDataStream s(&result, QIODevice::WriteOnly);
+
+    s << saveGeometry();
+    s << QMainWindow::saveState();
+    s << m_file;
+    s << view->saveState();
+
+    return result;
+}
+
+bool MainWindow::restoreState(const QByteArray &arr)
+{
+    QByteArray state(arr);
+    QDataStream s(&state, QIODevice::ReadOnly);
+
+    QByteArray windowState, windowGeometry, viewState;
+
+    s >> windowGeometry;
+    s >> windowState;
+    s >> m_file;
+    s >> viewState;
+
+    bool ok = true;
+    if (ok)
+        ok |= QMainWindow::restoreGeometry(windowGeometry);
+    if (ok)
+        ok |= QMainWindow::restoreState(windowState);
+    if (ok)
+        ok |= view->restoreState(viewState);
+
+    updateTitle();
+
+    return ok;
+}
+
 void MainWindow::about()
 {
     QMessageBox msgBox;
@@ -276,6 +319,9 @@ void MainWindow::setupMenuBar()
 void MainWindow::setupToolBar()
 {
     m_toolBar = new QToolBar(this);
+    m_toolBar->setObjectName("toolBar");
+    m_toolBar->setFloatable(false);
+    m_toolBar->setMovable(false);
 
     m_toolBar->addAction(view->action(QImageView::ZoomIn));
     m_toolBar->addAction(view->action(QImageView::ZoomOut));
