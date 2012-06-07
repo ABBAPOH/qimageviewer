@@ -383,6 +383,9 @@ void MainWindow::setupToolsMenu()
     toolsMenu->addAction(view->action(QImageView::FlipHorizontally));
     toolsMenu->addAction(view->action(QImageView::FlipVertically));
 
+    toolsMenu->addSeparator();
+    toolsMenu->addAction(view->action(QImageView::ResetOriginal));
+
     m_menuBar->addMenu(toolsMenu);
 }
 

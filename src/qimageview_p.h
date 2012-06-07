@@ -80,6 +80,19 @@ public:
     void undo();
 };
 
+class ResetOriginalCommand : public ImageViewCommand
+{
+public:
+    explicit ResetOriginalCommand(const QImage &image, int index, QImageViewPrivate *dd);
+
+    void redo();
+    void undo();
+
+private:
+    QImage m_image;
+    int m_index;
+};
+
 class CutCommand : public ImageViewCommand
 {
 public:
@@ -157,6 +170,7 @@ public:
     {
         ImageData() : nextImageDelay(0) {}
         QImage image;
+        QImage originalImage;
         int nextImageDelay;
     };
 
@@ -195,6 +209,8 @@ public:
 
 private:
     QImageView *q_ptr;
+
+    friend class ResetOriginalCommand;
 };
 
 #endif // QIMAGEVIEW_P_H

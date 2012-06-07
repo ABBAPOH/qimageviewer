@@ -153,6 +153,27 @@ void VFlipCommand::undo()
     d->flipVertically();
 }
 
+ResetOriginalCommand::ResetOriginalCommand(const QImage &image, int index, QImageViewPrivate *dd) :
+    ImageViewCommand(dd),
+    m_image(image),
+    m_index(index)
+{
+}
+
+void ResetOriginalCommand::redo()
+{
+    d->q_func()->jumpToImage(m_index);
+    d->images[m_index].image = d->images[m_index].originalImage;
+    d->syncPixmap();
+}
+
+void ResetOriginalCommand::undo()
+{
+    d->q_func()->jumpToImage(m_index);
+    d->images[m_index].image = m_image;
+    d->syncPixmap();
+}
+
 CutCommand::CutCommand(const QRect &rect, QImageViewPrivate *dd) :
     ImageViewCommand(dd),
     m_rect(rect)
@@ -729,6 +750,10 @@ void QImageViewPrivate::createActions()
     actions[QImageView::FlipVertically]->setShortcut(QKeySequence("Ctrl+Shift+V"));
     q->connect(actions[QImageView::FlipVertically], SIGNAL(triggered()), q, SLOT(flipVertically()));
 
+    actions[QImageView::ResetOriginal] = new QAction(q);
+    actions[QImageView::ResetOriginal]->setObjectName("actionResetOriginal");
+    q->connect(actions[QImageView::ResetOriginal], SIGNAL(triggered()), q, SLOT(resetOriginal()));
+
     for (int i = 0; i < QImageView::ActionsCount; ++i) {
         actions[i]->setShortcutContext(Qt::WidgetShortcut);
         q->addAction(actions[i]);
@@ -755,6 +780,7 @@ void QImageViewPrivate::retranslateUi()
     actions[QImageView::RotateRight]->setText(QImageView::tr("Rotate right"));
     actions[QImageView::FlipHorizontally]->setText(QImageView::tr("Flip horizontally"));
     actions[QImageView::FlipVertically]->setText(QImageView::tr("Flip vertically"));
+    actions[QImageView::ResetOriginal]->setText(QImageView::tr("Reset original"));
 }
 
 void QImageViewPrivate::updateActions()
@@ -856,6 +882,7 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
     for (int i = 0; i < reader.imageCount(); ++i) {
         QImageViewPrivate::ImageData data;
         data.image = reader.read();
+        data.originalImage = data.image;
         data.nextImageDelay = reader.nextImageDelay();
         d->images.append(data);
 
@@ -918,6 +945,7 @@ void QImageView::setImage(const QImage &image)
     d->setImage(image);
     QImageViewPrivate::ImageData data;
     data.image = image;
+    data.originalImage = image;
     data.nextImageDelay = 0;
     d->images.append(data);
     d->currentImageNumber = 0;
@@ -1128,6 +1156,13 @@ void QImageView::flipVertically()
     Q_D(QImageView);
 
     d->undoStack->push(new VFlipCommand(d));
+}
+
+void QImageView::resetOriginal()
+{
+    Q_D(QImageView);
+
+    d->undoStack->push(new ResetOriginalCommand(d->image(), d->currentImageNumber, d));
 }
 
 void QImageView::clearSelection()

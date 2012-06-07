@@ -48,6 +48,7 @@ public:
         RotateRight,
         FlipHorizontally,
         FlipVertically,
+        ResetOriginal,
 
         ActionsCount
     };
@@ -112,6 +113,7 @@ public slots:
 
     void flipHorizontally();
     void flipVertically();
+    void resetOriginal();
 
     void clearSelection();
 
