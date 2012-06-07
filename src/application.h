@@ -14,9 +14,13 @@ public:
 
 protected slots:
     void handleMessage(const QString &message);
+    void onAboutToQuit();
 
 protected:
     bool notify(QObject *object, QEvent *event);
+
+    void loadSettings();
+    void saveSettings();
 };
 
 #endif // APPLICATION_H

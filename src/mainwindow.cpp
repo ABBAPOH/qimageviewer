@@ -12,7 +12,6 @@
 
 #include "qimageview.h"
 #include "qimageresizedialog.h"
-#include "qimageviewsettings.h"
 #include "preferenceswidget.h"
 #include "windowsmenu.h"
 
