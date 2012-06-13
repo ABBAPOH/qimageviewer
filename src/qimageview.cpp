@@ -1150,6 +1150,9 @@ void QImageView::jumpToImage(int imageNumber)
     if (d->currentImageNumber == imageNumber)
         return;
 
+    if (imageNumber < 0 || imageNumber >= imageCount())
+        return;
+
     d->currentImageNumber = imageNumber;
     d->listWidget->setCurrentIndex(d->listWidget->model()->index(imageNumber, 0, QModelIndex()));
     d->setImage(d->images.at(imageNumber).image);
