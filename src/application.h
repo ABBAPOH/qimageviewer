@@ -12,8 +12,11 @@ public:
 
     void handleArguments(const QStringList &arguments);
 
-    void restoreSession();
+    bool restoreSession();
     void storeSession();
+
+    void loadSettings();
+    void saveSettings();
 
 protected slots:
     void handleMessage(const QString &message);
@@ -21,9 +24,6 @@ protected slots:
 
 protected:
     bool notify(QObject *object, QEvent *event);
-
-    void loadSettings();
-    void saveSettings();
 
     QByteArray saveState() const;
     bool restoreState(const QByteArray &state);

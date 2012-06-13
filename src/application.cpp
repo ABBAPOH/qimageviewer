@@ -21,9 +21,6 @@ Application::Application(const QString &id, int &argc, char **argv) :
     setOrganizationName("arch");
     connect(this, SIGNAL(messageReceived(QString)), SLOT(handleMessage(QString)));
     connect(this, SIGNAL(aboutToQuit()), SLOT(onAboutToQuit()));
-
-    restoreSession();
-    loadSettings();
 }
 
 QByteArray Application::saveState() const
@@ -105,7 +102,7 @@ void Application::handleArguments(const QStringList &arguments)
         MainWindow::newWindow();
 }
 
-void Application::restoreSession()
+bool Application::restoreSession()
 {
     QString dataPath = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
     QString filePath = dataPath + QLatin1Char('/') + QLatin1String("session");
@@ -121,6 +118,8 @@ void Application::restoreSession()
         if (!ok)
             qWarning() << tr("Couldn't restore session (located at %1)").arg(filePath);
     }
+
+    return ok;
 }
 
 void Application::handleMessage(const QString &message)

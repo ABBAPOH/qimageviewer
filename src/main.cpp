@@ -2,6 +2,7 @@
 #include <QLocale>
 #include <QUrl>
 #include <QTranslator>
+#include <QMessageBox>
 
 #include "application.h"
 #include "mainwindow.h"
@@ -60,6 +61,14 @@ int main(int argc, char *argv[])
     QTranslator translator;
     translator.load("qimageviewer_" + QLocale::system().name(), translationsPath);
     app.installTranslator(&translator);
+
+    app.loadSettings();
+    if (!app.restoreSession()) {
+        QMessageBox::warning(0,
+                             Application::tr("Warning"),
+                             Application::tr("Can't restore session"),
+                             QMessageBox::Close);
+    }
 
     app.handleArguments(arguments);
 
