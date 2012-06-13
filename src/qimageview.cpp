@@ -184,6 +184,7 @@ void ResetOriginalCommand::redo()
     d->q_func()->jumpToImage(m_index);
     d->images[m_index].image = d->images[m_index].originalImage;
     d->syncPixmap();
+    d->setModified(d->undoStack->index() != d->undoStackIndex);
 }
 
 void ResetOriginalCommand::undo()
@@ -191,6 +192,7 @@ void ResetOriginalCommand::undo()
     d->q_func()->jumpToImage(m_index);
     d->images[m_index].image = m_image;
     d->syncPixmap();
+    d->setModified(d->undoStack->index() != d->undoStackIndex);
 }
 
 CutCommand::CutCommand(const QRect &rect, QImageViewPrivate *dd) :
@@ -421,10 +423,7 @@ void QImageViewPrivate::animationFinished()
 
 void QImageViewPrivate::undoIndexChanged(int index)
 {
-    if (index == undoStackIndex)
-        setModified(false);
-    else
-        setModified(true);
+    setModified(index != undoStackIndex);
 }
 
 void QImageViewPrivate::onMoveToolTriggered(bool triggered)
