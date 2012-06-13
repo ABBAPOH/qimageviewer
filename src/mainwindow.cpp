@@ -408,6 +408,7 @@ void MainWindow::setupEditMenu()
     actionPreferences = new QAction(this);
     actionPreferences->setObjectName("actionPreferences");
     actionPreferences->setShortcut(QKeySequence("Ctrl+,"));
+    actionPreferences->setMenuRole(QAction::PreferencesRole);
     editMenu->addAction(actionPreferences);
 
     m_menuBar->addMenu(editMenu);
