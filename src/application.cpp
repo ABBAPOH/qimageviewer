@@ -11,7 +11,7 @@
 #include "mainwindow.h"
 #include "qimageviewsettings.h"
 
-static const quint32 m_magic = 0xf0f0;
+static const quint32 m_magic = 0x6130396e; // "a09n"
 static const quint8 m_version = 1;
 
 Application::Application(const QString &id, int &argc, char **argv) :

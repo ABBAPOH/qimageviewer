@@ -18,6 +18,9 @@
 QSize m_lastSize;
 QList<MainWindow*> m_windows;
 
+static const qint32 m_magic = 0x6d303877; // "m08w"
+static const qint8 m_version = 1;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
@@ -57,6 +60,8 @@ QByteArray MainWindow::saveState() const
     QByteArray result;
     QDataStream s(&result, QIODevice::WriteOnly);
 
+    s << m_magic;
+    s << m_version;
     s << saveGeometry();
     s << QMainWindow::saveState();
     s << m_file;
@@ -71,6 +76,17 @@ bool MainWindow::restoreState(const QByteArray &arr)
     QDataStream s(&state, QIODevice::ReadOnly);
 
     QByteArray windowState, windowGeometry, viewState;
+
+    qint32 magic;
+    qint8 version;
+
+    s >> magic;
+    if (magic != m_magic)
+        return false;
+
+    s >> version;
+    if (version != version)
+        return false;
 
     s >> windowGeometry;
     s >> windowState;

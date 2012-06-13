@@ -16,6 +16,9 @@
 #include "qimageviewsettings.h"
 #include "qimageviewsettings_p.h"
 
+static const qint32 m_magic = 0x71303877; // "q08w"
+static const qint8 m_version = 1;
+
 static QPoint adjustPoint(QPoint p, qreal factor)
 {
     return QPoint((int)(p.x()/factor)*factor, (int)(p.y()/factor)*factor);
@@ -1069,8 +1072,10 @@ QByteArray QImageView::saveState() const
     QByteArray result;
     QDataStream s(&result, QIODevice::WriteOnly);
 
+    s << m_magic;
+    s << m_version;
     s << d->images;
-    s << d->currentImageNumber;
+    s << (qint32)d->currentImageNumber;
     s << d->zoomFactor;
 
     return result;
@@ -1083,8 +1088,23 @@ bool QImageView::restoreState(const QByteArray &arr)
     QByteArray state(arr);
     QDataStream s(&state, QIODevice::ReadOnly);
 
-    int imageNumber;
-    s >> d->images;
+    qint32 imageNumber, magic;
+    qint8 version;
+
+    s >> magic;
+    if (magic != m_magic)
+        return false;
+
+    s >> version;
+    if (version != version)
+        return false;
+
+    QList<QImageViewPrivate::ImageData> images;
+    s >> images;
+    if (images.isEmpty())
+        return false;
+    qSwap(d->images, images);
+
     s >> imageNumber;
     s >> d->zoomFactor;
     d->visualZoomFactor = d->zoomFactor;
