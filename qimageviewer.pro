@@ -10,6 +10,7 @@ QT       += core gui opengl
 
 TARGET = qimageviewer
 TEMPLATE = app
+DESTDIR = bin
 
 include(src/qimageviewer.pri)
 
