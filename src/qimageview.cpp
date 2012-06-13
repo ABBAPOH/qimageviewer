@@ -565,12 +565,12 @@ QRect QImageViewPrivate::selectedImageRect() const
     qreal factor = visualZoomFactor;
     selectionRect = QRectF(selectionRect.topLeft()/factor, selectionRect.bottomRight()/factor);
 
-    QRect pixmapRect(QPoint(0, 0), pixmap.size());
+    QRectF pixmapRect(QPointF(0, 0), pixmap.size());
     pixmapRect.translate(-pixmapRect.center());
 
-    QRect result = QRectF(selectionRect.intersect(pixmapRect)).toAlignedRect();
-    result.translate(pixmap.width()/2, pixmap.height()/2);
-    return result;
+    QRectF result = QRectF(selectionRect.intersect(pixmapRect));
+    result.translate(pixmap.width()/2.0, pixmap.height()/2.0);
+    return result.toRect();
 }
 
 qreal QImageViewPrivate::getFitInViewFactor() const
