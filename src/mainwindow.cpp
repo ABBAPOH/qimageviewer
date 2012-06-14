@@ -108,11 +108,14 @@ bool MainWindow::restoreState(const QByteArray &arr)
 
 void MainWindow::about()
 {
+    QPixmap pixmap(":/icons/qimageviewer.png");
+    pixmap = pixmap.scaled(64, 64, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
     QMessageBox msgBox;
     msgBox.setWindowTitle(tr("About"));
     msgBox.setText(tr("QImageViewer"));
-    msgBox.setInformativeText(tr("Based on Qt %1\n\n (c) Ivan Komissarov aka ABBAPOH").arg(QT_VERSION_STR));
-    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setInformativeText(tr("(c) Ivan Komissarov\n\ne-mail: ABBAPOH@gmail.com"));
+    msgBox.setIconPixmap(pixmap);
     msgBox.exec();
 }
 
