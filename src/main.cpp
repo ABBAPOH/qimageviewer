@@ -63,12 +63,7 @@ int main(int argc, char *argv[])
     app.installTranslator(&translator);
 
     app.loadSettings();
-    if (!app.restoreSession()) {
-        QMessageBox::warning(0,
-                             Application::tr("Warning"),
-                             Application::tr("Can't restore session"),
-                             QMessageBox::Close);
-    }
+    app.restoreSession();
 
     app.handleArguments(arguments);
 
