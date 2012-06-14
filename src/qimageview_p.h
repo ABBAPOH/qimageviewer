@@ -134,6 +134,7 @@ public:
     void setCanCopy(bool can);
     void setModified(bool m);
     void setCanWrite(bool can);
+    void setCanReset(bool can);
 
     void rotate(bool left);
     void flipHorizontally();
@@ -201,6 +202,8 @@ public:
     int undoStackIndex;
     bool modified;
     bool canWrite;
+    bool isZeroModified; // if 0 element in undo stack is an original
+    bool canReset;
 
     QListWidget *listWidget;
     QImageView::Position thumbnailsPosition;

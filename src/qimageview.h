@@ -14,6 +14,7 @@ class QImageView : public QAbstractScrollArea
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged)
     Q_PROPERTY(bool canWrite READ canWrite NOTIFY canWriteChanged)
+    Q_PROPERTY(bool canResetOriginal READ canResetOriginal NOTIFY canResetOriginalChanged)
     Q_PROPERTY(bool modified READ isModified WRITE setModified NOTIFY modifiedChanged)
 
 public:
@@ -65,6 +66,7 @@ public:
     bool canUndo() const;
 
     bool canWrite() const;
+    bool canResetOriginal() const;
 
     void read(QIODevice *device, const QByteArray &format = QByteArray());
     void write(QIODevice *device, const QByteArray &format = QByteArray());
@@ -96,6 +98,7 @@ signals:
     void canRedoChanged(bool canRedo);
     void canUndoChanged(bool canUndo);
     void canWriteChanged(bool canWrite);
+    void canResetOriginalChanged(bool canReset);
     void modifiedChanged(bool modified);
 
 public slots:

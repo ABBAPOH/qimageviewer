@@ -257,6 +257,8 @@ QImageViewPrivate::QImageViewPrivate(QImageView *qq) :
     undoStack(new QUndoStack(qq)),
     undoStackIndex(0),
     modified(0),
+    isZeroModified(false),
+    canReset(false),
     canWrite(false),
     listWidget(new QListWidget(qq)),
     thumbnailsPosition(QImageView::East),
@@ -361,6 +363,16 @@ void QImageViewPrivate::setCanWrite(bool can)
     }
 }
 
+void QImageViewPrivate::setCanReset(bool can)
+{
+    Q_Q(QImageView);
+
+    if (canReset != can) {
+        canReset = can;
+        emit q->canResetOriginalChanged(canReset);
+    }
+}
+
 void QImageViewPrivate::rotate(bool left)
 {
     Q_Q(QImageView);
@@ -424,6 +436,7 @@ void QImageViewPrivate::animationFinished()
 void QImageViewPrivate::undoIndexChanged(int index)
 {
     setModified(index != undoStackIndex);
+    setCanReset(true);
 }
 
 void QImageViewPrivate::onMoveToolTriggered(bool triggered)
@@ -770,7 +783,10 @@ void QImageViewPrivate::createActions()
 
     actions[QImageView::ResetOriginal] = new QAction(q);
     actions[QImageView::ResetOriginal]->setObjectName("actionResetOriginal");
+    actions[QImageView::ResetOriginal]->setEnabled(false);
     q->connect(actions[QImageView::ResetOriginal], SIGNAL(triggered()), q, SLOT(resetOriginal()));
+    q->connect(q, SIGNAL(canResetOriginalChanged(bool)),
+               actions[QImageView::ResetOriginal], SLOT(setEnabled(bool)));
 
     for (int i = 0; i < QImageView::ActionsCount; ++i) {
         actions[i]->setShortcutContext(Qt::WidgetShortcut);
@@ -889,12 +905,22 @@ bool QImageView::canWrite() const
     return d->canWrite;
 }
 
+bool QImageView::canResetOriginal() const
+{
+    Q_D(const QImageView);
+
+    return d->canReset;
+}
+
 void QImageView::read(QIODevice *device, const QByteArray &format)
 {
     Q_D(QImageView);
 
     d->images.clear();
     d->listWidget->clear();
+    d->undoStack->clear();
+    d->isZeroModified = false;
+    d->setCanReset(false);
 
     QImageReader reader(device, format);
     for (int i = 0; i < reader.imageCount(); ++i) {
@@ -915,6 +941,7 @@ void QImageView::read(QIODevice *device, const QByteArray &format)
         d->visualZoomFactor = 1.0;
         d->updateScrollBars();
         d->updateActions();
+        d->setCanWrite(false);
         return;
     }
 
@@ -947,6 +974,10 @@ void QImageView::setImage(const QImage &image)
     Q_D(QImageView);
 
     d->images.clear();
+    d->undoStack->clear();
+    d->listWidget->clear();
+    d->isZeroModified = false;
+    d->setCanReset(false);
 
     if (image.isNull()) {
         d->images.append(QImageViewPrivate::ImageData());
@@ -1076,6 +1107,7 @@ QByteArray QImageView::saveState() const
     s << d->images;
     s << (qint32)d->currentImageNumber;
     s << d->zoomFactor;
+    s << d->canReset;
 
     return result;
 }
@@ -1089,6 +1121,7 @@ bool QImageView::restoreState(const QByteArray &arr)
 
     qint32 imageNumber, magic;
     qint8 version;
+    bool canReset;
 
     s >> magic;
     if (magic != m_magic)
@@ -1106,12 +1139,14 @@ bool QImageView::restoreState(const QByteArray &arr)
 
     s >> imageNumber;
     s >> d->zoomFactor;
+    s >> canReset;
     d->visualZoomFactor = d->zoomFactor;
 
     d->currentImageNumber = -1;
     jumpToImage(imageNumber);
 
     d->setCanWrite(imageCount() == 1);
+    d->setCanReset(canReset);
     d->updateThumbnailsState();
     d->updateActions();
 
