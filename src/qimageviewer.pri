@@ -1,36 +1,36 @@
 INCLUDEPATH *= $$PWD
 DEPENDPATH  *= $$PWD
 
-SOURCES += main.cpp\
-    qimageview.cpp \
-    mainwindow.cpp \
-    qimageviewsettings.cpp \
-    preferenceswidget.cpp \
-    qcolorbutton.cpp \
-    qimageresizedialog.cpp \
-    windowsmenu.cpp \
-    application.cpp
+SOURCES += $$PWD/main.cpp\
+    $$PWD/qimageview.cpp \
+    $$PWD/mainwindow.cpp \
+    $$PWD/qimageviewsettings.cpp \
+    $$PWD/preferenceswidget.cpp \
+    $$PWD/qcolorbutton.cpp \
+    $$PWD/qimageresizedialog.cpp \
+    $$PWD/windowsmenu.cpp \
+    $$PWD/application.cpp
 
 HEADERS  += \
-    qimageview.h \
-    qimageview_p.h \
-    mainwindow.h \
-    qimageviewsettings.h \
-    qimageviewsettings_p.h \
-    preferenceswidget.h \
-    qcolorbutton.h \
-    qcolorbutton_p.h \
-    qimageresizedialog.h \
-    windowsmenu.h \
-    application.h
+    $$PWD/qimageview.h \
+    $$PWD/qimageview_p.h \
+    $$PWD/mainwindow.h \
+    $$PWD/qimageviewsettings.h \
+    $$PWD/qimageviewsettings_p.h \
+    $$PWD/preferenceswidget.h \
+    $$PWD/qcolorbutton.h \
+    $$PWD/qcolorbutton_p.h \
+    $$PWD/qimageresizedialog.h \
+    $$PWD/windowsmenu.h \
+    $$PWD/application.h
 
 FORMS += \
-    preferenceswidget.ui \
-    qimageresizedialog.ui
+    $$PWD/preferenceswidget.ui \
+    $$PWD/qimageresizedialog.ui
 
 RESOURCES += \
-    src/resources.qrc
+    $$PWD/resources.qrc
 
-TRANSLATIONS = src/translations/qimageviewer_ru.ts
+TRANSLATIONS = $$PWD//translations/qimageviewer_ru.ts
 
 include(qtsingleapplication/qtsingleapplication.pri)
